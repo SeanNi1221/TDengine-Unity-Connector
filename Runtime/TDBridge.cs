@@ -25,18 +25,20 @@ public class TDBridge : MonoBehaviour
     public string userName = "root";
     public string password = "taosdata";
     [Header("Response")]
-    public string currentJson;
-    public JSONNode currentNode;
-    public TDResponse current;
-
-    [Header("Operation")]
+    [TextArea(1,50)]
+    public string jsonText;
+    public JSONNode jsonNode;
+    public TDResult result;
+    public enum TimeEncoding { Normal, Unix, UTC }
+    [Header("Terminal")]
+    public TimeEncoding responseTimeEncoding = TimeEncoding.Normal;
     [TextArea]
-    public string sql = "show databases";
+    public string SQL = "show databases";
     string token;
     string header;
     private string uriLogin;
     private string uriSQL;
-    private string uriT;
+    private string uriUnix;
     private string uriUTC;
     [Serializable]
     public struct LoginResponse {
@@ -45,7 +47,7 @@ public class TDBridge : MonoBehaviour
         public string desc;
     }
     [Serializable]
-    public class TDResponse {
+    public class TDResult {
         public string status;
         public List<ColumnMeta> columnMeta = new List<ColumnMeta>();
     }
@@ -64,23 +66,17 @@ public class TDBridge : MonoBehaviour
     {
         Initialize();
     }
-    void OnValidate()
-    {
-        FetchURI();
-        FetchHeader();
-    }
     public static void Login() {
         instance.StartCoroutine(instance.Login_co());
     }
     IEnumerator Login_co()
     {
         using ( UnityWebRequest request = UnityWebRequest.Get(uriLogin) ){
-            // Debug.Log("Logging in... " + request.uri);
+            Debug.Log("Logging in... " + request.uri);
             yield return request.SendWebRequest();
-            string response = request.downloadHandler.text;
-            // if ()
-            token = JsonUtility.FromJson<LoginResponse>(response).desc;
-            // Debug.Log ("userName: " + userName + ", password:" + password + ", token:" + token + ", IP:" + ip);
+            string json = request.downloadHandler.text;
+            token = JsonUtility.FromJson<LoginResponse>(json).desc;
+            Debug.Log ("Method:" + authorizationMethod + ", token:" + token + ", IP:" + ip);
             header = "Taosd " + token;
             if (request.isNetworkError || request.isHttpError)
             {
@@ -90,14 +86,57 @@ public class TDBridge : MonoBehaviour
             yield break; 
         }
     }
-    public static void PushSQL(string sql) {
-        instance.StartCoroutine(instance.RequestSQL(sql));
+    public static void PushSQL(string sql, TimeEncoding format = TimeEncoding.Normal) {
+        instance.StartCoroutine(instance.RequestSQL(sql, format));
     }
-    public IEnumerator RequestSQL(string sql, 
-        TDResponse returned = null, JSONNode returnedNode = null, string json = null )
+    //Result first
+    public static IEnumerator Request(string sql, TDResult resultHolder = null, JSONNode jsonNodeHolder = null, string jsonHolder = null) {
+        yield return instance.StartCoroutine(instance.RequestSQL(sql, TimeEncoding.Normal, resultHolder, jsonNodeHolder, jsonHolder));
+    }
+    public static IEnumerator RequestUnix(string sql, TDResult resultHolder = null, JSONNode jsonNodeHolder = null, string jsonHolder = null) {
+    yield return instance.StartCoroutine(instance.RequestSQL(sql, TimeEncoding.Unix, resultHolder, jsonNodeHolder, jsonHolder));
+    }
+    public static IEnumerator RequestUTC(string sql, TDResult resultHolder = null, JSONNode jsonNodeHolder = null, string jsonHolder = null) {
+    yield return instance.StartCoroutine(instance.RequestSQL(sql, TimeEncoding.UTC, resultHolder, jsonNodeHolder, jsonHolder));
+    }
+    //JsonNode first
+    public static IEnumerator Request(string sql, JSONNode jsonNodeHolder = null, string jsonHolder = null, TDResult resultHolder = null) {
+        yield return instance.StartCoroutine(instance.RequestSQL(sql, TimeEncoding.Normal, resultHolder, jsonNodeHolder, jsonHolder));
+    }
+    public static IEnumerator RequestUnix(string sql, JSONNode jsonNodeHolder = null, string jsonHolder = null, TDResult resultHolder = null) {
+    yield return instance.StartCoroutine(instance.RequestSQL(sql, TimeEncoding.Unix, resultHolder, jsonNodeHolder, jsonHolder));
+    }
+    public static IEnumerator RequestUTC(string sql, JSONNode jsonNodeHolder = null, string jsonHolder = null, TDResult resultHolder = null) {
+    yield return instance.StartCoroutine(instance.RequestSQL(sql, TimeEncoding.UTC, resultHolder, jsonNodeHolder, jsonHolder));
+    }
+    //Json first
+    public static IEnumerator Request(string sql, string jsonHolder = null, JSONNode jsonNodeHolder = null, TDResult resultHolder = null) {
+        yield return instance.StartCoroutine(instance.RequestSQL(sql, TimeEncoding.Normal, resultHolder, jsonNodeHolder, jsonHolder));
+    }
+    public static IEnumerator RequestUnix(string sql, string jsonHolder = null, JSONNode jsonNodeHolder = null, TDResult resultHolder = null) {
+    yield return instance.StartCoroutine(instance.RequestSQL(sql, TimeEncoding.Unix, resultHolder, jsonNodeHolder, jsonHolder));
+    }
+    public static IEnumerator RequestUTC(string sql, string jsonHolder = null, JSONNode jsonNodeHolder = null, TDResult resultHolder = null) {
+    yield return instance.StartCoroutine(instance.RequestSQL(sql, TimeEncoding.UTC, resultHolder, jsonNodeHolder, jsonHolder));
+    }
+    IEnumerator RequestSQL(string sql, TimeEncoding format = TimeEncoding.Normal, TDResult resultHolder = null, JSONNode jsonNodeHolder = null, string jsonHolder = null )
     {            
-
-        using ( UnityWebRequest request = UnityWebRequest.Put(instance.uriSQL, sql) ){
+        string uri;
+        switch (format) {
+            default:
+                uri = instance.uriSQL;
+                break;
+            case TimeEncoding.Normal:
+                uri = instance.uriSQL;
+                break;
+            case TimeEncoding.Unix:
+                uri = instance.uriUnix;
+                break;
+            case TimeEncoding.UTC:
+                uri = instance.uriUTC;
+                break;                                
+        }
+        using ( UnityWebRequest request = UnityWebRequest.Put(uri, sql) ){
             Debug.Log("try connecting: " + request.uri);
             request.SetRequestHeader("Authorization", instance.header);
             yield return request.SendWebRequest();                
@@ -110,40 +149,26 @@ public class TDBridge : MonoBehaviour
             string postContent = System.Text.Encoding.UTF8.GetString(request.uploadHandler.data);
             Debug.Log("posted content: " + postContent);
             
-            currentJson = request.downloadHandler.text;
-            if (json != null) {
-                json = currentJson;
-            }
-            Debug.Log("current json:" + currentJson);
-            
-            yield return currentNode = JSON.Parse(currentJson);
-            Debug.Log("parsing json finished!");
-            // Debug.Log("colum meta [0] = " + currentNode.column_meta);
-            if (returnedNode != null) {
-                returnedNode = currentNode;
+            jsonText = request.downloadHandler.text;
+            if (jsonHolder != null) {
+                jsonHolder = jsonText;
+            }    
+            yield return jsonNode = JSON.Parse(jsonText);
+            if (jsonNodeHolder != null) {
+                jsonNodeHolder = jsonNode;
             }
 
-            current.status = currentNode["status"].Value;
-            current.columnMeta.Clear();
-            foreach (JSONNode n in currentNode["column_meta"]) {
+            result.status = jsonNode["status"].Value;
+            result.columnMeta.Clear();
+            foreach (JSONNode n in jsonNode["column_meta"]) {
                 ColumnMeta _meta = new ColumnMeta(n[0].Value, n[1].AsInt, n[2].AsInt);
-                Debug.Log("Attribute:" + _meta.attribute + "type:" + _meta.type + "length:" + _meta.length);
-                current.columnMeta.Add(_meta);
+                result.columnMeta.Add(_meta);
             }
-            if ( returned != null ) {
-                returned = current;
+            if ( resultHolder != null ) {
+                resultHolder = result;
             }
             yield break;
         }
-    }
-
-    public static string Base64Encode(string t){
-        var tBytes =  System.Text.Encoding.UTF8.GetBytes(t);
-        return System.Convert.ToBase64String(tBytes);
-    }
-    public static string Base64Decode(string base64){
-        var base64Bytes = System.Convert.FromBase64String(base64);
-        return System.Text.Encoding.UTF8.GetString(base64Bytes);
     }
     public void Initialize()
     {
@@ -155,9 +180,9 @@ public class TDBridge : MonoBehaviour
         }
         FetchURI();
         FetchHeader();
-        currentJson = null;
-        currentNode = null;
-        current = null;
+        jsonText = null;
+        jsonNode = null;
+        result = null;
         Debug.Log("TDBridge initialized.");
     }
     private void FetchURI() {
@@ -169,7 +194,7 @@ public class TDBridge : MonoBehaviour
         }
         uriSQL = "http://" + ip + ":" + port + "/rest/sql";
         uriLogin = "http://" + ip + ":" + port + "/rest/login/" + userName + "/" + password;
-        uriT = "http://" + ip + ":" + port + "/rest/sqlt";
+        uriUnix = "http://" + ip + ":" + port + "/rest/sqlt";
         uriUTC = "http://" + ip + ":" + port + "/rest/sqlutc";
     }
     private void FetchHeader() {
@@ -177,7 +202,7 @@ public class TDBridge : MonoBehaviour
         {
             case AuthorizationMethod.Basic:
                 token = Base64Encode(userName + ":" + password);
-                // Debug.Log ("userName: " + userName + ", password:" + password + ", token:" + token + ", IP:" + ip);
+                Debug.Log ("Method:" + authorizationMethod + ", token:" + token + ", IP:" + ip);
                 header = "Basic " + token;
                 break;
             case AuthorizationMethod.Taosd:
@@ -185,6 +210,13 @@ public class TDBridge : MonoBehaviour
                 break;
         }
     }
-    
+    public static string Base64Encode(string t){
+        var tBytes =  System.Text.Encoding.UTF8.GetBytes(t);
+        return System.Convert.ToBase64String(tBytes);
+    }
+    public static string Base64Decode(string base64){
+        var base64Bytes = System.Convert.FromBase64String(base64);
+        return System.Text.Encoding.UTF8.GetString(base64Bytes);
+    }
 }
 }

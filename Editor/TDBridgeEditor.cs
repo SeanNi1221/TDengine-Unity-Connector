@@ -13,7 +13,7 @@ public class TDBridgeEditor : Editor
         DrawDefaultInspector();
         if (GUILayout.Button("Execute SQL", GUILayout.Height(32)))
         {
-            TDBridge.PushSQL(td.sql);
+            TDBridge.PushSQL(td.SQL, td.responseTimeEncoding);           
         }
         if (GUILayout.Button("Initialize TDBridge"))
         {
