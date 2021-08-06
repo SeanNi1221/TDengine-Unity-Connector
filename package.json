@@ -7,12 +7,6 @@
   "documentationUrl": "https://github.com/SeanNi1221/unity-bridge-to-TDengine#readme",
   "changelogUrl": " ",
   "licensesUrl": "https://github.com/SeanNi1221/unity-bridge-to-TDengine/blob/main/LICENSE",
-  "samples": [
-    {
-      "displayName": "TDBridge Sample",
-      "path": "Samples~"
-    }
-  ],
   "keywords": [
     "tdbridge",
     "tdengine",
