@@ -1,0 +1,29 @@
+{
+  "name": "sean.bridge.tdbridge",
+  "version": "0.1.0",
+  "displayName": "TDBridge",
+  "description": "A TDengine connector for Unity Editor and multi-platform runtime",
+  "unity": "2017.3",
+  "documentationUrl": " ",
+  "changelogUrl": " ",
+  "licensesUrl": " ",
+  "samples": [
+    {
+      "displayName": "TDBridge Sample",
+      "path": "Samples/"
+    }
+  ],
+  "keywords": [
+    "tdbridge",
+    "tdengine",
+    "hmi",
+    "iot"
+  ],
+  "author": {
+    "name": "Sean21",
+    "email": "Sean.21@outlook.com",
+    "url": "https://www.example.com"
+  },
+  "type": "tool",
+  "hideInEditor": false
+}
