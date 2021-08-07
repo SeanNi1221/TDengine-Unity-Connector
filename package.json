@@ -1,6 +1,6 @@
 {
   "name": "sean.bridge.tdbridge",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "displayName": "TDBridge",
   "description": "A TDengine connector for Unity Editor and multi-platform runtime",
   "unity": "2019.4",
@@ -19,5 +19,9 @@
     "url": "https://www.example.com"
   },
   "type": "tool",
-  "hideInEditor": false
+  "hideInEditor": false,
+  "repository": {
+    "url": "https://github.com/SeanNi1221/unity-bridge-to-TDengine.git",
+    "type": "git"
+  }
 }
