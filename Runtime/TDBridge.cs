@@ -14,9 +14,9 @@ public class TDBridge : MonoBehaviour
     [Tooltip("The Server IP to be used if running in Unity Editor. This is for convenience during development." + "\n" +
     "e.g., In a typical B/S architecture, you have the same machine as both database server and web server, so you use 192.168.5.5 to connect to the database in the Unity Editor, and use 127.0.0.1 for the same purpose in the deployed webGL environment.")]
     public string ipForEditor = "127.0.0.1";
-    [Tooltip("The Server IP to be used if running in Build Application. It needs to direct to the save server as the above one.")]
+    [Tooltip("The Server IP to be used if running in Build Application. It needs to direct to the same server as the above one.")]
     public string ipForBuild = "127.0.0.1";
-    string ip;
+
     public string port = "6041";
     public enum AuthorizationMethod { Basic, Taosd }
 
@@ -25,15 +25,22 @@ public class TDBridge : MonoBehaviour
     public string userName = "root";
     public string password = "taosdata";
     [Header("Response")]
-    [TextArea(1,50)]
+    [Tooltip("The endocing method for the time stamp in the responding json" + "\n" +
+        "Only affects here for testing purposes.")]
+    public TimeEncoding timeEncoding = TimeEncoding.Normal;
+    public enum TimeEncoding { Normal, Unix, UTC }    [TextArea(0,50)]
+    [Tooltip("The responded json from your TDengine server." + "\n" +
+        "Do not modify this field because it's pointless.")]
     public string jsonText;
     public JSONNode jsonNode;
-    public TDResult result;
-    public enum TimeEncoding { Normal, Unix, UTC }
+    [Tooltip("Partial parsed result from the Json Text. Use your custom class/method to parse the 'data' section of the json. Checkout the Documentation for more information." + "\n" +
+        "Do not modify this field because it's pointless.")]
+    public Result result;
     [Header("Terminal")]
-    public TimeEncoding responseTimeEncoding = TimeEncoding.Normal;
     [TextArea]
+    [Tooltip("Insert your SQL statement to be executed.")]
     public string SQL = "show databases";
+    string ip;
     string token;
     string header;
     private string uriLogin;
@@ -41,24 +48,24 @@ public class TDBridge : MonoBehaviour
     private string uriUnix;
     private string uriUTC;
     [Serializable]
-    public struct LoginResponse {
+    public struct LoginResult {
         public string status;
         public int code;
         public string desc;
     }
     [Serializable]
-    public class TDResult {
+    public class Result {
         public string status;
         public List<ColumnMeta> columnMeta = new List<ColumnMeta>();
     }
     [Serializable]
     public struct ColumnMeta {
         public string attribute;
-        public int type;
+        public int typeIndex;
         public int length;
         public ColumnMeta( string a, int t, int l) {
             this.attribute = a;
-            this.type = t;
+            this.typeIndex = t;
             this.length = l;
         }
     }
@@ -75,7 +82,7 @@ public class TDBridge : MonoBehaviour
             Debug.Log("Logging in... " + request.uri);
             yield return request.SendWebRequest();
             string json = request.downloadHandler.text;
-            token = JsonUtility.FromJson<LoginResponse>(json).desc;
+            token = JsonUtility.FromJson<LoginResult>(json).desc;
             Debug.Log ("Method:" + authorizationMethod + ", token:" + token + ", IP:" + ip);
             header = "Taosd " + token;
             if (request.isNetworkError || request.isHttpError)
@@ -90,36 +97,36 @@ public class TDBridge : MonoBehaviour
         instance.StartCoroutine(instance.RequestSQL(sql, format));
     }
     //Result first
-    public static IEnumerator Request(string sql, TDResult resultHolder = null, JSONNode jsonNodeHolder = null, string jsonHolder = null) {
+    public static IEnumerator Request(string sql, Result resultHolder = null, JSONNode jsonNodeHolder = null, string jsonHolder = null) {
         yield return instance.StartCoroutine(instance.RequestSQL(sql, TimeEncoding.Normal, resultHolder, jsonNodeHolder, jsonHolder));
     }
-    public static IEnumerator RequestUnix(string sql, TDResult resultHolder = null, JSONNode jsonNodeHolder = null, string jsonHolder = null) {
+    public static IEnumerator RequestUnix(string sql, Result resultHolder = null, JSONNode jsonNodeHolder = null, string jsonHolder = null) {
     yield return instance.StartCoroutine(instance.RequestSQL(sql, TimeEncoding.Unix, resultHolder, jsonNodeHolder, jsonHolder));
     }
-    public static IEnumerator RequestUTC(string sql, TDResult resultHolder = null, JSONNode jsonNodeHolder = null, string jsonHolder = null) {
+    public static IEnumerator RequestUTC(string sql, Result resultHolder = null, JSONNode jsonNodeHolder = null, string jsonHolder = null) {
     yield return instance.StartCoroutine(instance.RequestSQL(sql, TimeEncoding.UTC, resultHolder, jsonNodeHolder, jsonHolder));
     }
     //JsonNode first
-    public static IEnumerator Request(string sql, JSONNode jsonNodeHolder = null, string jsonHolder = null, TDResult resultHolder = null) {
+    public static IEnumerator Request(string sql, JSONNode jsonNodeHolder = null, string jsonHolder = null, Result resultHolder = null) {
         yield return instance.StartCoroutine(instance.RequestSQL(sql, TimeEncoding.Normal, resultHolder, jsonNodeHolder, jsonHolder));
     }
-    public static IEnumerator RequestUnix(string sql, JSONNode jsonNodeHolder = null, string jsonHolder = null, TDResult resultHolder = null) {
+    public static IEnumerator RequestUnix(string sql, JSONNode jsonNodeHolder = null, string jsonHolder = null, Result resultHolder = null) {
     yield return instance.StartCoroutine(instance.RequestSQL(sql, TimeEncoding.Unix, resultHolder, jsonNodeHolder, jsonHolder));
     }
-    public static IEnumerator RequestUTC(string sql, JSONNode jsonNodeHolder = null, string jsonHolder = null, TDResult resultHolder = null) {
+    public static IEnumerator RequestUTC(string sql, JSONNode jsonNodeHolder = null, string jsonHolder = null, Result resultHolder = null) {
     yield return instance.StartCoroutine(instance.RequestSQL(sql, TimeEncoding.UTC, resultHolder, jsonNodeHolder, jsonHolder));
     }
     //Json first
-    public static IEnumerator Request(string sql, string jsonHolder = null, JSONNode jsonNodeHolder = null, TDResult resultHolder = null) {
+    public static IEnumerator Request(string sql, string jsonHolder = null, JSONNode jsonNodeHolder = null, Result resultHolder = null) {
         yield return instance.StartCoroutine(instance.RequestSQL(sql, TimeEncoding.Normal, resultHolder, jsonNodeHolder, jsonHolder));
     }
-    public static IEnumerator RequestUnix(string sql, string jsonHolder = null, JSONNode jsonNodeHolder = null, TDResult resultHolder = null) {
+    public static IEnumerator RequestUnix(string sql, string jsonHolder = null, JSONNode jsonNodeHolder = null, Result resultHolder = null) {
     yield return instance.StartCoroutine(instance.RequestSQL(sql, TimeEncoding.Unix, resultHolder, jsonNodeHolder, jsonHolder));
     }
-    public static IEnumerator RequestUTC(string sql, string jsonHolder = null, JSONNode jsonNodeHolder = null, TDResult resultHolder = null) {
+    public static IEnumerator RequestUTC(string sql, string jsonHolder = null, JSONNode jsonNodeHolder = null, Result resultHolder = null) {
     yield return instance.StartCoroutine(instance.RequestSQL(sql, TimeEncoding.UTC, resultHolder, jsonNodeHolder, jsonHolder));
     }
-    IEnumerator RequestSQL(string sql, TimeEncoding format = TimeEncoding.Normal, TDResult resultHolder = null, JSONNode jsonNodeHolder = null, string jsonHolder = null )
+    IEnumerator RequestSQL(string sql, TimeEncoding format = TimeEncoding.Normal, Result resultHolder = null, JSONNode jsonNodeHolder = null, string jsonHolder = null )
     {            
         string uri;
         switch (format) {
