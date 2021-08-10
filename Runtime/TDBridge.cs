@@ -3,9 +3,36 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
 using System;
+using System.Reflection;
 using SimpleJSON;
 namespace Sean.Bridge
 {
+
+[AttributeUsage(AttributeTargets.Field)]
+public class DataField : Attribute
+{    private int _length;
+    public int length {
+        get { 
+                return string.IsNullOrEmpty(_length.ToString()) || _length <=0 ? 10:_length;
+        }
+        set {
+            _length = value;
+        }
+    }
+}
+[AttributeUsage(AttributeTargets.Field)]
+public class DataTag : Attribute
+{
+    private int _length;
+    public int length {
+        get { 
+                return string.IsNullOrEmpty(_length.ToString()) || _length <=0 ? 10:_length;
+        }
+        set {
+            _length = value;
+        }
+    }
+}
 [ExecuteInEditMode]
 public class TDBridge : MonoBehaviour
 {
@@ -16,7 +43,6 @@ public class TDBridge : MonoBehaviour
     public string ipForEditor = "127.0.0.1";
     [Tooltip("The Server IP to be used if running in Build Application. It needs to direct to the same server as the above one.")]
     public string ipForBuild = "127.0.0.1";
-
     public string port = "6041";
     public enum AuthorizationMethod { Basic, Taosd }
 
@@ -67,6 +93,18 @@ public class TDBridge : MonoBehaviour
             this.attribute = a;
             this.typeIndex = t;
             this.length = l;
+        }
+    }
+    public struct Bin {
+        public byte[] cell;
+        public Bin( byte[] _cell ) {
+            this.cell = _cell;
+        }
+        public string Decode() {
+            return ASCIIDecode(cell);
+        }
+        public void Endoce( string s ) {
+            cell = ASCIIEncode(s);
         }
     }
     void Awake()
@@ -154,7 +192,7 @@ public class TDBridge : MonoBehaviour
             }
             string authorization = request.GetRequestHeader("Authorization").ToString();
             string postContent = System.Text.Encoding.UTF8.GetString(request.uploadHandler.data);
-            Debug.Log("posted content: " + postContent);
+            Debug.Log("pushed SQL: " + postContent);
             
             jsonText = request.downloadHandler.text;
             if (jsonHolder != null) {
@@ -225,5 +263,57 @@ public class TDBridge : MonoBehaviour
         var base64Bytes = System.Convert.FromBase64String(base64);
         return System.Text.Encoding.UTF8.GetString(base64Bytes);
     }
+    public static byte[] ASCIIEncode(string s) {
+        return System.Text.Encoding.ASCII.GetBytes(s);
+    }
+    public static string ASCIIDecode(byte[] bArray) {
+        return System.Text.Encoding.ASCII.GetString(bArray);
+    }
+    public static void CreateSTable<T>(string db_name = "test", string stb_name = null, string timestamp_field_name = "ts") {
+        if (string.IsNullOrEmpty(stb_name)) {
+            stb_name = "'" + typeof(T).Name + "'";
+        }
+        List<string> fieldMeta = new List<string>{ "'" + timestamp_field_name + "'" + " TIMESTAMP" };
+        string fieldSet;
+        List<string> tagMeta = new List<string>();
+        string tagSet;
+        string sql;
+        foreach (var field in typeof(T).GetFields()) {            
+            DataField df = Attribute.GetCustomAttribute(field, typeof(DataField)) as DataField;
+            DataTag dt = Attribute.GetCustomAttribute(field, typeof(DataTag)) as DataTag;
+            if ( df != null) {
+                int typeIndex = varType.IndexOf(field.FieldType);
+                string meta = " '" + field.Name + "' " + dataType[typeIndex];
+                if (typeIndex == dataType.IndexOf("NCHAR")) {
+                    meta += "(" + df.length.ToString() + ")";
+                }
+                fieldMeta.Add(meta);
+            }
+            else if ( dt != null) {
+                int typeIndex = varType.IndexOf(field.FieldType);
+                string meta = " '" + field.Name + "' " + dataType[typeIndex];
+                if (typeIndex == dataType.IndexOf("NCHAR")) {
+                    meta += "(" + dt.length.ToString() + ")";
+                }
+                tagMeta.Add(meta);
+            }
+        }
+        fieldSet = string.Join("," , fieldMeta);
+        tagSet = string.Join("," , tagMeta);
+        sql = "CREATE STABLE '" + db_name + "'." + stb_name + " (" + fieldSet + ") " + "TAGS" + "(" + tagSet + ")";
+        Debug.Log(sql);
+        PushSQL(sql);
+    }
+    public static void Insert(object obj) {
+        foreach (var field in obj.GetType().GetFields(BindingFlags.Instance  | BindingFlags.Public | BindingFlags.NonPublic)) {
+            DataField df = Attribute.GetCustomAttribute(field, typeof(DataField)) as DataField;
+            if (df != null) {
+                Debug.Log(field.Name + " is a key");
+            }
+        }
+    }
+
+    public static List<System.Type> varType = new List<System.Type>{ typeof(System.String), typeof(System.Boolean), typeof(System.Byte), typeof(System.Int16), typeof(System.Int32), typeof(System.Int64), typeof(System.Single), typeof(System.Double), typeof(Bin), typeof(System.DateTime),typeof(System.String) };
+    public static List<string> dataType = new List<string>{ "NCHAR", "BOOL", "TINYINT", "SMALLINT", "INT", "BIGINT", "FLOAT", "DOUBLE", "BINARY", "TIMESTAMP", "NCHAR" };
 }
 }
