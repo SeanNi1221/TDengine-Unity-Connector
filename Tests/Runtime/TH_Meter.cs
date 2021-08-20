@@ -5,8 +5,9 @@ using Sean.Bridge;
 
 public class TH_Meter : MonoBehaviour
 {
-    public string id = "1000265";
     [DataTag]
+    public string id = "1000265";
+    [DataTag(4)]
     new public string name = "温湿度传感器";
     [DataTag]
     public string location = "Beijing";
@@ -14,11 +15,15 @@ public class TH_Meter : MonoBehaviour
     public float temperature;
     [DataField]
     public float humidity;
-    public string noData = "this field will not be in database because it does not have a DataTag/DataField attribute.";
-
+    [DataField]
+    public string string_data = "This Is A String Field.";
+    public TH_Meter[] meterArray;
     void Start()
     {
-        TDBridge.CreateSTable<TH_Meter>();
-        TDBridge.Insert(this);
+
+        // TDBridge.CreateTableUsing(this);
+        // TDBridge.CreateTable(this);
+        // TDBridge.CreateTable<TH_Meter>();
+        // TH_Meter meter1 = new
     }
 }

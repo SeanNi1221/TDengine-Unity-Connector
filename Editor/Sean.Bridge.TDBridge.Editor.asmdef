@@ -2,5 +2,9 @@
 	"name": "Sean.Bridge.TDBridge.Editor",
 	"references": [
 		"Sean.Bridge.TDBridge"
-		]
+		],
+	"includePlatforms": [
+		"Editor"
+    ],
+    "excludePlatforms": []
 }
