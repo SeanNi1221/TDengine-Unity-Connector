@@ -2,8 +2,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
-using Sean.Bridge;
-
+namespace Sean21
+{
 [CustomEditor(typeof(TDBridge))]
 public class TDBridgeEditor : Editor
 {
@@ -11,13 +11,14 @@ public class TDBridgeEditor : Editor
     {
         TDBridge td = (TDBridge)target;
         DrawDefaultInspector();
-        if (GUILayout.Button("Execute SQL", GUILayout.Height(32)))
+        if (GUILayout.Button("Push SQL", GUILayout.Height(32)))
         {
-            TDBridge.PushSQL(td.SQL_, td.defaultTimeEncoding);           
+            TDBridge.PushSQL(td.SQL_);           
         }
         if (GUILayout.Button("Initialize & Login TDBridge"))
         {
             td.Initialize();
         }
     }
+}
 }

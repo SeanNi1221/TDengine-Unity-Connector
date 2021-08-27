@@ -1,23 +1,22 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using Sean.Bridge;
+using Sean21;
 
 public class TH_Meter : MonoBehaviour
 {
     [DataTag]
     public string id = "1000265";
-    [DataTag(4)]
+    [DataTag(20)]
     new public string name = "温湿度传感器";
-    [DataTag]
-    public string location = "Beijing";
+    [DataTag(40)]
+    public bin location = "Beijing";
     [DataField]
     public float temperature;
     [DataField]
     public float humidity;
-    [DataField]
+    [DataField(40)]
     public string string_data = "This Is A String Field.";
-    public TH_Meter[] meterArray;
     void Start()
     {
 

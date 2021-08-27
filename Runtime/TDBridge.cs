@@ -3,11 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
 using System;
-using SimpleJSON;
-namespace Sean.Bridge
+namespace Sean21
 {
-
-
 [ExecuteInEditMode]
 public partial class TDBridge : MonoBehaviour
 {
@@ -37,7 +34,6 @@ public partial class TDBridge : MonoBehaviour
     [Tooltip("The responded json from your TDengine server." + "\n" +
         "Do not modify this field because it's pointless.")]
     public string jsonText;
-    public JSONNode jsonNode;
     [Tooltip("Partial parsed result from the Json Text. Use your custom class/method to parse the 'data' section of the json. Checkout the Documentation for more information." + "\n" +
         "Do not modify this field because it's pointless.")]
     public Result result;
@@ -47,21 +43,24 @@ public partial class TDBridge : MonoBehaviour
     public string SQL_ = "show databases";
     string ip;
     string token;
-    string header;
+    public string header {
+        get; private set;
+    }
     private string uriLogin;
     private string uriSQL;
     private string uriUnix;
     private string uriUTC;
     [Serializable]
-    public struct LoginResult {
+    public class Result {
+        public string status;
+        public List<ColumnMeta> column_meta = new List<ColumnMeta>();
+        public List<Row> data = new List<Row>();
+        public int rows;
+    }
+    public class LoginResult {
         public string status;
         public int code;
         public string desc;
-    }
-    [Serializable]
-    public class Result {
-        public string status;
-        public List<ColumnMeta> columnMeta = new List<ColumnMeta>();
     }
     [Serializable]
     public struct ColumnMeta {
@@ -79,22 +78,17 @@ public partial class TDBridge : MonoBehaviour
             this.isResizable = (t == dataType.IndexOf("nchar") || t == dataType.IndexOf("binary"));
         }
     }
-    //For BINARY type in the database.
-    public struct Bin {
-        public byte[] Byte;
-        public Bin( byte[] _Byte ) {
-            this.Byte = _Byte;
-        }
-        public string Decode() {
-            return ASCIIDecode(Byte);
-        }
-        public void Endoce( string s ) {
-            Byte = ASCIIEncode(s);
+    [Serializable]
+    public struct Row {
+        public List<string> value; 
+        public Row(List<string> _value = null) {
+            this.value = _value;
         }
     }
+
     public enum TimeEncoding { Normal, Unix, UTC }
-    static string TimeStamp14 {
-        get {return System.DateTime.Now.ToString("yyMMddHHmmssff");}
+    static string TimeStamp16 {
+        get {return System.DateTime.Now.ToString("yyMMddHHmmssffff");}
     }    
     const string Dot = ".";
     const string Space = " ";
@@ -111,8 +105,10 @@ public partial class TDBridge : MonoBehaviour
             Debug.Log("Logging in... " + request.uri);
             yield return request.SendWebRequest();
             string json = request.downloadHandler.text;
-            token = JsonUtility.FromJson<LoginResult>(json).desc;
+            token = ParseLogin(json).desc;
+#if UNITY_EDITOR            
             Debug.Log ("Method:" + authorizationMethod + ", token:" + token + ", IP:" + ip);
+#endif
             header = "Taosd " + token;
             if (request.isNetworkError || request.isHttpError)
             {
@@ -122,94 +118,39 @@ public partial class TDBridge : MonoBehaviour
             yield break; 
         }
     }
-    public static void PushSQL(string sql, TimeEncoding format = TimeEncoding.Normal) {
-        i.StartCoroutine(i.RequestSQL(sql, format));
+    public static void PushSQL(string sql) {
+        i.StartCoroutine(Push(sql));
     }
-    //Ignore results
-    public IEnumerator Request(string sql) {
-        yield return i.StartCoroutine(i.RequestSQL(sql));
-    }
-    //Result first
-    public static IEnumerator Request(string sql, Result resultHolder, JSONNode jsonNodeHolder = null, string jsonHolder = null) {
-        yield return i.StartCoroutine(i.RequestSQL(sql, TimeEncoding.Normal, resultHolder, jsonNodeHolder, jsonHolder));
-    }
-    public static IEnumerator RequestUnix(string sql, Result resultHolder = null, JSONNode jsonNodeHolder = null, string jsonHolder = null) {
-    yield return i.StartCoroutine(i.RequestSQL(sql, TimeEncoding.Unix, resultHolder, jsonNodeHolder, jsonHolder));
-    }
-    public static IEnumerator RequestUTC(string sql, Result resultHolder = null, JSONNode jsonNodeHolder = null, string jsonHolder = null) {
-    yield return i.StartCoroutine(i.RequestSQL(sql, TimeEncoding.UTC, resultHolder, jsonNodeHolder, jsonHolder));
-    }
-    //JsonNode first
-    public static IEnumerator Request(string sql, JSONNode jsonNodeHolder, string jsonHolder = null, Result resultHolder = null) {
-        yield return i.StartCoroutine(i.RequestSQL(sql, TimeEncoding.Normal, resultHolder, jsonNodeHolder, jsonHolder));
-    }
-    public static IEnumerator RequestUnix(string sql, JSONNode jsonNodeHolder = null, string jsonHolder = null, Result resultHolder = null) {
-    yield return i.StartCoroutine(i.RequestSQL(sql, TimeEncoding.Unix, resultHolder, jsonNodeHolder, jsonHolder));
-    }
-    public static IEnumerator RequestUTC(string sql, JSONNode jsonNodeHolder = null, string jsonHolder = null, Result resultHolder = null) {
-    yield return i.StartCoroutine(i.RequestSQL(sql, TimeEncoding.UTC, resultHolder, jsonNodeHolder, jsonHolder));
-    }
-    //Json first
-    public static IEnumerator Request(string sql, string jsonHolder, JSONNode jsonNodeHolder = null, Result resultHolder = null) {
-        yield return i.StartCoroutine(i.RequestSQL(sql, TimeEncoding.Normal, resultHolder, jsonNodeHolder, jsonHolder));
-    }
-    public static IEnumerator RequestUnix(string sql, string jsonHolder = null, JSONNode jsonNodeHolder = null, Result resultHolder = null) {
-    yield return i.StartCoroutine(i.RequestSQL(sql, TimeEncoding.Unix, resultHolder, jsonNodeHolder, jsonHolder));
-    }
-    public static IEnumerator RequestUTC(string sql, string jsonHolder = null, JSONNode jsonNodeHolder = null, Result resultHolder = null) {
-    yield return i.StartCoroutine(i.RequestSQL(sql, TimeEncoding.UTC, resultHolder, jsonNodeHolder, jsonHolder));
-    }
-    IEnumerator RequestSQL(string sql, TimeEncoding format = TimeEncoding.Normal, Result resultHolder = null, JSONNode jsonNodeHolder = null, string jsonHolder = null )
+    public static IEnumerator Push(string sql)
     {            
-        string uri;
-        switch (format) {
-            default:
-                uri = i.uriSQL;
-                break;
-            case TimeEncoding.Normal:
-                uri = i.uriSQL;
-                break;
-            case TimeEncoding.Unix:
-                uri = i.uriUnix;
-                break;
-            case TimeEncoding.UTC:
-                uri = i.uriUTC;
-                break;                                
-        }
+        string uri = ChooseUri(i.defaultTimeEncoding);
         using ( UnityWebRequest request = UnityWebRequest.Put(uri, sql) ){
-            Debug.Log("try connecting: " + request.uri);
+            Debug.Log("Connecting: " + request.uri);
             request.SetRequestHeader("Authorization", i.header);
             yield return request.SendWebRequest();                
             if (request.isNetworkError || request.isHttpError)
             {
-                Debug.LogError(request.error);
+                Debug.LogError("Failed pushing SQL: \n" + sql + "\n with error: " + request.error + requestHint(request.responseCode));
                 yield break;
             }
-            string authorization = request.GetRequestHeader("Authorization").ToString();
-            string postContent = System.Text.Encoding.UTF8.GetString(request.uploadHandler.data);
-            Debug.Log("pushed SQL: " + postContent);
-            
-            jsonText = request.downloadHandler.text;
-            if (jsonHolder != null) {
-                jsonHolder = jsonText;
-            }    
-            yield return jsonNode = JSON.Parse(jsonText);
-            if (jsonNodeHolder != null) {
-                jsonNodeHolder = jsonNode;
-            }
-
-            result.status = jsonNode["status"].Value;
-            result.columnMeta.Clear();
-            foreach (JSONNode n in jsonNode["column_meta"]) {
-                ColumnMeta _meta = new ColumnMeta(n[0].Value, n[1].AsInt, n[2].AsInt);
-                result.columnMeta.Add(_meta);
-            }
-            if ( resultHolder != null ) {
-                resultHolder = result;
-            }
+            // string authorization = request.GetRequestHeader("Authorization").ToString();
+            // string postContent = System.Text.Encoding.UTF8.GetString(request.uploadHandler.data);
+            Debug.Log("Successfully pushed SQL: \n" + sql);
+#if UNITY_EDITOR                        
+            i.jsonText = request.downloadHandler.text;
+            i.result = Parse(i.jsonText);
+#endif
             yield break;
         }
     }
+    public static Func<long, string> requestHint = x => {
+        switch (x) {
+            default:
+                return "";
+            case 400:
+                return ", Possible cause: Invalid SQL statement.";
+        }
+    };
     public void Initialize()
     {
         if (!i) {
@@ -221,7 +162,6 @@ public partial class TDBridge : MonoBehaviour
         FetchURI();
         FetchHeader();
         jsonText = null;
-        jsonNode = null;
         result = null;
         Debug.Log("TDBridge initialized.");
     }
@@ -250,6 +190,21 @@ public partial class TDBridge : MonoBehaviour
                 break;
         }
     }
+    public static string ChooseUri(TimeEncoding format)
+    {
+        // string uri;
+        switch (format) {
+            default:
+                return i.uriSQL;
+            case TimeEncoding.Normal:
+                return i.uriSQL;
+            case TimeEncoding.Unix:
+                return i.uriUnix;
+            case TimeEncoding.UTC:
+                return i.uriUTC;
+        }
+        // return uri;
+    }
     static string Base64Encode(string t){
         var tBytes =  System.Text.Encoding.UTF8.GetBytes(t);
         return System.Convert.ToBase64String(tBytes);
@@ -258,10 +213,10 @@ public partial class TDBridge : MonoBehaviour
         var base64Bytes = System.Convert.FromBase64String(base64);
         return System.Text.Encoding.UTF8.GetString(base64Bytes);
     }
-    static byte[] ASCIIEncode(string s) {
+    public static byte[] ASCIIEncode(string s) {
         return System.Text.Encoding.ASCII.GetBytes(s);
     }
-    static string ASCIIDecode(byte[] bArray) {
+    public static string ASCIIDecode(byte[] bArray) {
         return System.Text.Encoding.ASCII.GetString(bArray);
     }
     static string Quote(string s) {
@@ -293,5 +248,35 @@ public partial class TDBridge : MonoBehaviour
     static string Bracket(float f) {
         return Bracket(f.ToString(), true);
     }
+    static bool isValidForName(char c)
+    {
+        return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || (c == '_');
+    }
+}
+//For BINARY type in the database.
+[Serializable]
+public struct bin {
+    public string String;
+    public byte[] Byte {
+        get {
+            return TDBridge.ASCIIEncode(String);
+        }
+        set {
+            String = TDBridge.ASCIIDecode(value);
+        }
+    }
+    public bin( string s = null) {
+        this.String = s;
+    }
+    public bin( byte[] b ) {
+        this.String = TDBridge.ASCIIDecode(b);
+    }
+    public override string ToString() {
+        return this.String;
+    }
+    public static implicit operator string(bin b) => b.String;
+    public static implicit operator byte[](bin b) => b.Byte;
+    public static implicit operator bin(string s) => new bin(s);
+    public static implicit operator bin(byte[] b) => new bin(b);
 }
 }
