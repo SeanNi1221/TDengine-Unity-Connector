@@ -29,10 +29,20 @@ public partial class TDBridge
         string sql = SQL.CreateTableUsing(objects, db_name, tb_names, stb_name, if_not_exists);
         PushSQL(sql);
     }
+    public static IEnumerator AlterTableOf<T>(string db_name = null, string tb_name = null) {
+        string _tb_name = SQL.SetTableNameWith<T>(tb_name);
+        yield return AlterTableOf(typeof(T), db_name, _tb_name);
+    }
     public static IEnumerator AlterTableOf(UnityEngine.Object obj, string db_name = null, string tb_name = null) {
+        string _tb_name = SQL.SetTableNameWith(obj, tb_name);
+        yield return AlterTableOf(obj.GetType(), db_name, _tb_name);
+    }
+//ALTER TABLE tb_name ADD COLUMN field_name data_type...
+//ALTER TABLE tb_name DROP COLUMN field_name...
+//ALTER TABLE tb_name MODIFY COLUMN field_name data_type(length)..
+    public static IEnumerator AlterTableOf(System.Type _type, string db_name, string tb_name = null) {
 //Prepare SQL snippets
         db_name = SQL.SetDatabaseName(db_name);
-        tb_name = SQL.SetTableNameWith(obj, tb_name);
         string action = "ALTER TABLE ";
         string add = " ADD COLUMN ";
         string drop = " DROP COLUMN ";
@@ -41,7 +51,7 @@ public partial class TDBridge
         TDRequest request = new TDRequest("SELECT * FROM " + db_name + Dot + tb_name + " LIMIT 1");
         yield return request.Send();
         List<ColumnMeta> currentMeta = request.result.column_meta;
-        List<ColumnMeta> newMeta = FieldMetasOf(obj);
+        List<ColumnMeta> newMeta = FieldMetasOf(_type);
         List<Coroutine> resizing = new List<Coroutine>();
         List<Coroutine> dropping = new List<Coroutine>();
         List<Coroutine> adding = new List<Coroutine>();
@@ -198,7 +208,35 @@ public partial class TDBridge
             tb_name = SetTableNameWith(obj,tb_name);
             return action + db_name + Dot + tb_name + Space + FieldNames(obj, timestamp_field_name) + Space + FieldValues(obj, time);
         }
-        
+        //ALTER TABLE tb_name SET TAG tag_name=new_tag_value;
+        public static string TagValues(UnityEngine.Object obj) {
+            List<string> tagValues = new List<string>();
+            foreach (var field in obj.GetType().GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)) {
+                DataTag dt = Attribute.GetCustomAttribute(field, typeof(DataTag)) as DataTag;
+                if (dt != null) {
+                    string value = serializeValue(obj, field, dt.length);                                       
+                    tagValues.Add(value);
+                }
+            }
+            return " TAGS" + Bracket( string.Join(", " , tagValues) );
+        }
+//ALTER TABLE tb_name SET TAG tag_name=new_tag_value;
+        public static string SetTags(UnityEngine.Object obj, string db_name = null, string tb_name = null) {
+            string action  = "ALTER TABLE ";
+            string operation = " SET TAG ";
+            db_name = SQL.SetDatabaseName(db_name);
+            tb_name = SQL.SetTableNameWith(obj);
+            foreach (var field in obj.GetType().GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)) {
+
+            return action;
+        }
+        }
+// return action + db_name + Dot + tb_name + operation + tag_name
+        // static Func<UnityEngine.Object, string, string, string> SetTagsOf = (obj, db_name, string tb_name) => {
+        //     string action  = "ALTER TABLE ";
+        //     string operation = " SET TAG ";
+        //     return "sss";
+        // };
         public static string FieldNames(UnityEngine.Object obj, string timestamp_field_name = "ts") {
             return FieldNames( obj.GetType(), timestamp_field_name);
         }
@@ -330,6 +368,12 @@ public partial class TDBridge
                 tb_name = typeof(T).Name + "_instance_" + TimeStamp16;
             }
             return tb_name;
+        }
+        public static string SetTableNameWith(System.Type type, string tb_name =null) {
+            if (string.IsNullOrEmpty(tb_name)) {
+                tb_name = type.Name;
+            }
+            return tb_name;            
         }
         public static string SetTableNameWith(UnityEngine.Object obj, string tb_name = null) {
             if (string.IsNullOrEmpty(tb_name)) {
