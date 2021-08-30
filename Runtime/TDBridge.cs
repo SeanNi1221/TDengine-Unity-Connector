@@ -125,7 +125,6 @@ public partial class TDBridge : MonoBehaviour
     {            
         string uri = ChooseUri(i.defaultTimeEncoding);
         using ( UnityWebRequest request = UnityWebRequest.Put(uri, sql) ){
-            Debug.Log("Connecting: " + request.uri);
             request.SetRequestHeader("Authorization", i.header);
             yield return request.SendWebRequest();                
             if (request.isNetworkError || request.isHttpError)
@@ -133,8 +132,6 @@ public partial class TDBridge : MonoBehaviour
                 Debug.LogError("Failed pushing SQL: \n" + sql + "\n with error: " + request.error + requestHint(request.responseCode));
                 yield break;
             }
-            // string authorization = request.GetRequestHeader("Authorization").ToString();
-            // string postContent = System.Text.Encoding.UTF8.GetString(request.uploadHandler.data);
             Debug.Log("Successfully pushed SQL: \n" + sql);
 #if UNITY_EDITOR                        
             i.jsonText = request.downloadHandler.text;

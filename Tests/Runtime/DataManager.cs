@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Sean21;
+[ExecuteInEditMode]
 public class DataManager : MonoBehaviour
 {
     public TH_Meter[] meterArray;
@@ -16,7 +17,10 @@ public class DataManager : MonoBehaviour
         // TDBridge.CreateTable(alterTest[0]);
         // TDBridge.Insert(alterTest[0]);
         // TDBridge.InsertSpecific(alterTest[0]);
-        StartCoroutine(TDBridge.AlterTableOf(alterTest[0]));        
+        // StartCoroutine(TDBridge.AlterTableOf(alterTest[0]));        
+        // StartCoroutine(DropTables());
+        // StartCoroutine(TDBridge.SetTags(meterList[0]));
+        TDBridge.SetTag(meterList[0],"name");
     }
 
     void Start()
@@ -29,4 +33,13 @@ public class DataManager : MonoBehaviour
     {
         
     }
+    IEnumerator DropTables() {
+        for (int i=10; i<30; i++) {
+            string tb_name = i.ToString();
+            string drop = "DROP TABLE IF EXISTS " + "test.t" + tb_name;
+            TDBridge.PushSQL(drop);
+            yield return new WaitForEndOfFrame();
+        }
+    }
+
 }

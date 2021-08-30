@@ -136,6 +136,17 @@ public partial class TDBridge
         string sql = SQL.InsertSpecific(obj, db_name, tb_name, timestamp_field_name, time);
         PushSQL(sql);
     }
+    public static void SetTag(UnityEngine.Object obj, string tag_name, string db_name = null, string tb_name = null) {
+        string sql = SQL.SetTag(obj, tag_name, db_name, tb_name);
+        PushSQL(sql);
+    }
+    public static IEnumerator SetTags(UnityEngine.Object obj, string db_name = null, string tb_name = null) {
+        List<string> sqls = SQL.SetTags(obj, db_name, tb_name);
+        foreach (string sql in sqls) {
+            PushSQL(sql);
+            yield return new WaitForEndOfFrame();
+        }
+    }
     public static partial class SQL
     {
         public static string CreateSTable<T>(string db_name = null, string stb_name = null, string timestamp_field_name = "ts", bool if_not_exists = true) {
@@ -208,28 +219,36 @@ public partial class TDBridge
             tb_name = SetTableNameWith(obj,tb_name);
             return action + db_name + Dot + tb_name + Space + FieldNames(obj, timestamp_field_name) + Space + FieldValues(obj, time);
         }
-        //ALTER TABLE tb_name SET TAG tag_name=new_tag_value;
-        public static string TagValues(UnityEngine.Object obj) {
-            List<string> tagValues = new List<string>();
-            foreach (var field in obj.GetType().GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)) {
-                DataTag dt = Attribute.GetCustomAttribute(field, typeof(DataTag)) as DataTag;
-                if (dt != null) {
-                    string value = serializeValue(obj, field, dt.length);                                       
-                    tagValues.Add(value);
-                }
-            }
-            return " TAGS" + Bracket( string.Join(", " , tagValues) );
-        }
-//ALTER TABLE tb_name SET TAG tag_name=new_tag_value;
-        public static string SetTags(UnityEngine.Object obj, string db_name = null, string tb_name = null) {
+//ALTER TABLE tb_name SET TAG tag1_name=new_tag1_value; ALTER TABLE tb_name SET TAG tag1_name=new_tag1_value;
+        public static List<string> SetTags(UnityEngine.Object obj, string db_name = null, string tb_name = null) {
             string action  = "ALTER TABLE ";
             string operation = " SET TAG ";
+            List<string> sqls = new List<string>();
             db_name = SQL.SetDatabaseName(db_name);
             tb_name = SQL.SetTableNameWith(obj);
             foreach (var field in obj.GetType().GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)) {
-
-            return action;
+                DataTag dt = Attribute.GetCustomAttribute(field, typeof(DataTag)) as DataTag;
+                if (dt != null) {
+                    string new_tag_value = serializeValue(obj, field, dt.length);                                       
+                    sqls.Add(action + db_name + Dot + tb_name + operation + field.Name + "=" + new_tag_value);
+                }
+            }
+            return sqls;
         }
+// //ALTER TABLE tb_name SET TAG tag_name=new_tag_value;
+        public static string SetTag(UnityEngine.Object obj, string tag_name, string db_name = null, string tb_name = null) {
+            string action  = "ALTER TABLE ";
+            string operation = " SET TAG ";
+            string new_tag_value = null;
+            db_name = SQL.SetDatabaseName(db_name);
+            tb_name = SQL.SetTableNameWith(obj);            
+            foreach (var field in obj.GetType().GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)) {
+                DataTag dt = Attribute.GetCustomAttribute(field, typeof(DataTag)) as DataTag;
+                if (dt != null && field.Name.Equals(tag_name, StringComparison.InvariantCultureIgnoreCase)) {
+                    new_tag_value = serializeValue(obj, field, dt.length);                                       
+                }
+            }
+            return action + db_name + Dot + tb_name + operation + tag_name + "=" + new_tag_value;
         }
 // return action + db_name + Dot + tb_name + operation + tag_name
         // static Func<UnityEngine.Object, string, string, string> SetTagsOf = (obj, db_name, string tb_name) => {
