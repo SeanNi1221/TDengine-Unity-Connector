@@ -29,32 +29,113 @@ public partial class TDBridge
         string sql = SQL.CreateTableUsing(objects, db_name, tb_names, stb_name, if_not_exists);
         PushSQL(sql);
     }
-    public static IEnumerator AlterTableOf<T>(string db_name = null, string tb_name = null) {
-        string _tb_name = SQL.SetTableNameWith<T>(tb_name);
-        yield return AlterTableOf(typeof(T), db_name, _tb_name);
+    public static void Insert(UnityEngine.Object obj, string db_name = null, string tb_name = null, string time = "NOW") {
+        string sql = SQL.Insert(obj, db_name, tb_name, time);
+        PushSQL(sql);
     }
-    public static IEnumerator AlterTableOf(UnityEngine.Object obj, string db_name = null, string tb_name = null) {
-        string _tb_name = SQL.SetTableNameWith(obj, tb_name);
-        yield return AlterTableOf(obj.GetType(), db_name, _tb_name);
+    public static void Insert(UnityEngine.Object[] objects, string db_name = null, string[] _tb_name = null, string[] _time = null) {
+        string sql = SQL.Insert(objects, db_name,_tb_name, _time);
+        PushSQL(sql);
     }
-//ALTER TABLE tb_name ADD COLUMN field_name data_type...
-//ALTER TABLE tb_name DROP COLUMN field_name...
-//ALTER TABLE tb_name MODIFY COLUMN field_name data_type(length)..
-    public static IEnumerator AlterTableOf(System.Type _type, string db_name, string tb_name = null) {
-//Prepare SQL snippets
+    public static void InsertSpecific(UnityEngine.Object obj, string db_name = null, string tb_name = null,string timestamp_field_name = "ts", string time = "NOW") {
+        string sql = SQL.InsertSpecific(obj, db_name, tb_name, timestamp_field_name, time);
+        PushSQL(sql);
+    }
+    public static void InsertSpecific(UnityEngine.Object[] objects, string db_name = null, string[] _tb_name = null, string timestamp_field_name = "ts", string[] _time = null) {
+        string sql = SQL.InsertSpecific(objects, db_name, _tb_name, timestamp_field_name, _time);
+        PushSQL(sql);
+    }
+    public static void InsertUsing(UnityEngine.Object obj, string db_name = null, string stb_name = null, string tb_name = null, string time = "NOW") {
+        string sql = SQL.InsertUsing(obj, db_name, stb_name, tb_name, time);
+        PushSQL(sql);
+    }
+    public static void InsertUsing(UnityEngine.Object[] objects, string db_name = null, string stb_name = null, string[] _tb_name = null, string[] _time = null) {
+        string sql = SQL.InsertUsing(objects, db_name, stb_name, _tb_name, _time);
+        PushSQL(sql);
+    }
+    public static void InsertSpecificUsing(UnityEngine.Object obj, string db_name = null, string stb_name = null, string tb_name = null, string time = "NOW") {
+        string sql = SQL.InsertSpecificUsing(obj, db_name, stb_name, tb_name, time);
+        PushSQL(sql);
+    }
+    public static void InsertSpecificUsing(UnityEngine.Object[] objects, string db_name = null, string stb_name = null, string[] _tb_name = null, string timestamp_field_name = "ts", string[] _time = null) {
+        string sql = SQL.InsertSpecificUsing(objects, db_name, stb_name, _tb_name, timestamp_field_name, _time);
+        PushSQL(sql);
+    }
+    public static void SetTag(UnityEngine.Object obj, string tag_name, string db_name = null, string tb_name = null) {
+        string sql = SQL.SetTag(obj, tag_name, db_name, tb_name);
+        PushSQL(sql);
+    }
+    public static IEnumerator SetTags(UnityEngine.Object obj, string db_name = null, string tb_name = null) {
+        List<string> sqls = SQL.SetTags(obj, db_name, tb_name);
+        foreach (string sql in sqls) {
+            PushSQL(sql);
+            yield return new WaitForEndOfFrame();
+        }
+    }
+    public static IEnumerator AlterSTableOf<T>(string db_name = null, string stb_name = null) {
+        stb_name = SQL.SetSTableNameWith<T>(stb_name);
+        yield return AlterSTableOf(typeof(T), db_name, stb_name);
+    }
+    public static IEnumerator AlterSTableOf(UnityEngine.Object obj, string db_name = null, string stb_name = null) {
+        stb_name = SQL.SetSTableNameWith(obj, stb_name);
+        yield return AlterSTableOf(obj.GetType(), db_name, stb_name);
+    }
+    public static IEnumerator AlterSTableOf(System.Type _type, string db_name, string stb_name) {
         db_name = SQL.SetDatabaseName(db_name);
-        string action = "ALTER TABLE ";
-        string add = " ADD COLUMN ";
-        string drop = " DROP COLUMN ";
-        string resize = " MODIFY COLUMN ";
+        string action = "ALTER STABLE ";
 //Aqcuire table structure
-        TDRequest request = new TDRequest("SELECT * FROM " + db_name + Dot + tb_name + " LIMIT 1");
+    //fields
+        TDRequest request = new TDRequest("SELECT FIRST(*) FROM " + db_name + Dot + stb_name);
         yield return request.Send();
         List<ColumnMeta> currentMeta = request.result.column_meta;
         List<ColumnMeta> newMeta = FieldMetasOf(_type);
+    //tags
+        request.sql = "SELECT * FROM " + db_name + Dot + stb_name + " LIMIT 1";
+        yield return request.Send();
+        request.result.column_meta.RemoveRange(0, currentMeta.Count);
+        List<ColumnMeta> currentTagsMeta = request.result.column_meta;
+        List<ColumnMeta> newTagsMeta = TagMetasOf(_type);
+//Take action for fields
+        yield return AlterColumns(currentMeta, newMeta,db_name, stb_name, action);
+        Debug.Log("Altering fields of " + stb_name + " finished.");
+//Take action for tags
+        yield return AlterColumns(currentTagsMeta, newTagsMeta,db_name, stb_name, action, true);
+        Debug.Log("Altering tags of " + stb_name + " finished.");
+    }
+    public static IEnumerator AlterTableOf<T>(string db_name = null, string tb_name = null) {
+        tb_name = SQL.SetTableNameWith<T>(tb_name);
+        yield return AlterTableOf(typeof(T), db_name, tb_name);
+    }
+    public static IEnumerator AlterTableOf(UnityEngine.Object obj, string db_name = null, string tb_name = null) {
+        tb_name = SQL.SetTableNameWith(obj, tb_name);
+        yield return AlterTableOf(obj.GetType(), db_name, tb_name);
+    }
+    public static IEnumerator AlterTableOf(System.Type _type, string db_name, string tb_name) {
+        db_name = SQL.SetDatabaseName(db_name);
+        string action = "ALTER TABLE ";
+//Aqcuire table structure
+        TDRequest request = new TDRequest("SELECT FIRST(*) FROM " + db_name + Dot + tb_name);
+        yield return request.Send();
+        List<ColumnMeta> currentMeta = request.result.column_meta;
+        List<ColumnMeta> newMeta = FieldMetasOf(_type);
+//Take action
+        yield return AlterColumns(currentMeta, newMeta,db_name, tb_name, action);
+        Debug.Log("Altering table " + tb_name + " finished.");
+    }
+    static IEnumerator AlterColumns(List<ColumnMeta> currentMeta, List<ColumnMeta> newMeta, string db_name, string tb_name, string action, bool forTags = false) {
+//Prepare SQL snippets
+        string add = " ADD COLUMN ";
+        string drop = " DROP COLUMN ";
+        string resize = " MODIFY COLUMN ";
+        if (forTags) {
+            add = " ADD TAG ";
+            drop = " DROP TAG ";
+            resize = " MODIFY TAG ";
+        }
         List<Coroutine> resizing = new List<Coroutine>();
         List<Coroutine> dropping = new List<Coroutine>();
         List<Coroutine> adding = new List<Coroutine>();
+        List<ColumnMeta> resized = new List<ColumnMeta>();
         List<ColumnMeta> dropped = new List<ColumnMeta>();
         List<ColumnMeta> added = new List<ColumnMeta>();    
 //Dorp deprecated and resize those with length changed.
@@ -74,6 +155,7 @@ public partial class TDBridge
                                         Space + dataType[type] + Bracket(newCol.length.ToString())
                                     )
                                 ));
+                                resized.Add(col);
                             }
                             else if (col.length > newCol.length) { shouldDrop = true; } 
                         }
@@ -117,7 +199,7 @@ public partial class TDBridge
         }
         foreach (Coroutine c in adding) { yield return c; }
 //Conclude
-        Debug.Log("Altering table Finished with " + dropping.Count + " columns dropped, " + resizing.Count + " columns resized, " + adding.Count + " columns added.");
+        Debug.Log(dropping.Count + " columns dropped, " + resizing.Count + " columns resized, " + adding.Count + " columns added.");
         foreach (ColumnMeta col_dropped in dropped) {
             foreach (ColumnMeta col_added in added) {
                 if (col_added.attribute == col_dropped.attribute) {
@@ -126,25 +208,6 @@ public partial class TDBridge
                     "\n Solution B: Instead of Insert(Object), Use the InsertSpecific(Object) method in the future, at the cost of performance.");
                 }
             }
-        }
-    }
-    public static void Insert(UnityEngine.Object obj, string db_name = null, string tb_name = null, string time = "NOW") {
-        string sql = SQL.Insert(obj, db_name, tb_name, time);
-        PushSQL(sql);
-    }
-    public static void InsertSpecific(UnityEngine.Object obj, string db_name = null, string tb_name = null,string timestamp_field_name = "ts", string time = "NOW") {
-        string sql = SQL.InsertSpecific(obj, db_name, tb_name, timestamp_field_name, time);
-        PushSQL(sql);
-    }
-    public static void SetTag(UnityEngine.Object obj, string tag_name, string db_name = null, string tb_name = null) {
-        string sql = SQL.SetTag(obj, tag_name, db_name, tb_name);
-        PushSQL(sql);
-    }
-    public static IEnumerator SetTags(UnityEngine.Object obj, string db_name = null, string tb_name = null) {
-        List<string> sqls = SQL.SetTags(obj, db_name, tb_name);
-        foreach (string sql in sqls) {
-            PushSQL(sql);
-            yield return new WaitForEndOfFrame();
         }
     }
     public static partial class SQL
@@ -206,19 +269,110 @@ public partial class TDBridge
             Debug.Log("SQL- CREATE TABLE from " + objects.Length + " objects using"  + stb_name + ":" + "\n" + sql );
             return sql;
         }
+//INSERT INTO d1001 VALUES (NOW, 10.2, 219, 0.32)
         public static string Insert(UnityEngine.Object obj, string db_name = null, string tb_name = null, string time = "NOW") {
             string action = "INSERT INTO ";
             db_name = SetDatabaseName(db_name);
             tb_name = SetTableNameWith(obj,tb_name);
             return action + Quote(db_name) + Dot + Quote(tb_name) + FieldValues(obj, time);
         }
+        //INSERT INTO d1001 VALUES ('NOW', 10.2, 219, 0.32) d1002 VALUES ('NOW', 10.2, 219, 0.32) ...
+        public static string Insert(UnityEngine.Object[] objects, string db_name = null, string[] _tb_name = null, string[] _time = null) {
+            var (tb_name, time) = multiTableInit(objects, _tb_name, _time);
+            string action = "INSERT INTO ";
+            List<string> tables = new List<string>();
+            db_name = SetDatabaseName(db_name);
+            for (int i=0; i< objects.Length; i++) {
+                tb_name[i] = SetTableNameWith(objects[i], tb_name[i]);
+                tables.Add( db_name + Dot + tb_name[i] + FieldValues(objects[i], time[i]) );
+            }
+            return action + string.Join(" ", tables);
+        }
         //INSERT INTO d1001 (ts, current, phase) VALUES ('2021-07-13 14:06:33.196', 10.27, 0.31)
         public static string InsertSpecific(UnityEngine.Object obj, string db_name = null, string tb_name = null, string timestamp_field_name = "ts", string time = "NOW") {
             string action = "INSERT INTO ";
             db_name = SetDatabaseName(db_name);
             tb_name = SetTableNameWith(obj,tb_name);
-            return action + db_name + Dot + tb_name + Space + FieldNames(obj, timestamp_field_name) + Space + FieldValues(obj, time);
+            return action + db_name + Dot + tb_name + Space + FieldNames(obj, timestamp_field_name) + FieldValues(obj, time);
         }
+        //INSERT INTO d1001 (ts, current, phase) VALUES ('NOW', 10.2, 219, 0.32) d1002 (ts, current, phase) VALUES ('NOW', 10.2, 219, 0.32) ...
+        public static string InsertSpecific(UnityEngine.Object[] objects, string db_name = null, string[] _tb_name = null, string timestamp_field_name = "ts", string[] _time = null) {
+            var (tb_name, time) = multiTableInit(objects, _tb_name, _time);
+            string action = "INSERT INTO ";
+            List<string> tables = new List<string>();
+            db_name = SetDatabaseName(db_name);
+            string fieldNames = FieldNames(objects[0], timestamp_field_name);
+            for (int i=0; i< objects.Length; i++) {
+                tb_name[i] = SetTableNameWith(objects[i], tb_name[i]);
+                tables.Add( db_name + Dot + tb_name[i] + Space + fieldNames + FieldValues(objects[i], time[i]) );
+            }
+            return action + string.Join(" ", tables);                        
+        }
+//INSERT INTO d21001 USING meters TAGS ('Beijing.Chaoyang', 2) VALUES ('2021-07-13 14:06:32.272', 10.2, 219, 0.32)
+        public static string InsertUsing(UnityEngine.Object obj, string db_name = null, string stb_name = null, string tb_name = null, string time = "NOW") {
+            string action = "INSERT INTO ";
+            string operation = " USING ";
+            db_name = SetDatabaseName(db_name);
+            stb_name = db_name + Dot + SetSTableNameWith(obj, stb_name);
+            tb_name = db_name + Dot + SetTableNameWith(obj, tb_name);
+            return action + tb_name + operation + stb_name + TagValues(obj) + Space + FieldValues(obj);
+        }
+//INSERT INTO d21001 USING meters TAGS ('Beijing.Chaoyang', 2) VALUES ('2021-07-13 14:06:34.630', 10.2, 219, 0.32) 
+//d21002 USING meters TAGS ('Beijing.Chaoyang', 2) VALUES ('2021-07-13 14:06:34.630', 10.2, 219, 0.32) ...
+        public static string InsertUsing(UnityEngine.Object[] objects, string db_name = null, string stb_name = null, string[] _tb_name = null, string[] _time = null) {
+            var (tb_name, time) = multiTableInit(objects, _tb_name, _time);
+            string action = "INSERT INTO ";
+            string operation = " USING ";
+            List<string> tables = new List<string>();
+            db_name = SetDatabaseName(db_name);
+            stb_name = db_name + Dot + SetSTableNameWith(objects[0]);
+            for (int i=0; i< objects.Length; i++) {
+                tb_name[i] = db_name + Dot + SetTableNameWith(objects[i], tb_name[i]);
+                tables.Add( tb_name[i] + operation + stb_name + TagValues(objects[i]) + Space + FieldValues(objects[i], time[i]) );
+            }
+            return action + string.Join(" ", tables);
+        }
+//INSERT INTO d21001 USING meters (groupId) TAGS (2) VALUES ('2021-07-13 14:06:33.196', 10.15, 217, 0.33)
+        public static string InsertSpecificUsing(UnityEngine.Object obj, string db_name = null, string stb_name = null, string tb_name = null, string time = "NOW") {
+            string action = "INSERT INTO ";
+            string operation = " USING ";
+            db_name = SetDatabaseName(db_name);
+            stb_name = db_name + Dot + SetSTableNameWith(obj, stb_name);
+            tb_name = db_name + Dot + SetTableNameWith(obj, tb_name);
+            return action + tb_name + operation + stb_name + Space + TagNames(obj) + TagValues(obj) + Space + FieldValues(obj);            
+        }
+//INSERT INTO d21001 USING meters (groupId) TAGS (2) (ts, current, phase) VALUES ('2021-07-13 14:06:33.196', 10.15, 217, 0.33)
+//d21002 USING meters (groupId) TAGS (2) (ts, current, phase) VALUES ('2021-07-13 14:06:33.196', 10.15, 217, 0.33) ...
+        public static string InsertSpecificUsing(UnityEngine.Object[] objects, string db_name = null, string stb_name = null, string[] _tb_name = null, string timestamp_field_name = "ts", string[] _time = null) {
+            var (tb_name, time) = multiTableInit(objects, _tb_name, _time);
+            string action = "INSERT INTO ";
+            string operation = " USING ";
+            List<string> tables = new List<string>();
+            db_name = SetDatabaseName(db_name);
+            stb_name = db_name + Dot + SetSTableNameWith(objects[0]);
+            string tagNames = TagNames(objects[0]);
+            string fieldNames = FieldNames(objects[0], timestamp_field_name);
+            for (int i=0; i< objects.Length; i++) {
+                tb_name[i] = db_name + Dot + SetTableNameWith(objects[i], tb_name[i]);
+                tables.Add( tb_name[i] + operation + stb_name + Space + tagNames + TagValues(objects[i]) + Space + fieldNames + FieldValues(objects[i], time[i]) );
+            }
+            return action + string.Join(" ", tables);
+        }
+        static Func< UnityEngine.Object[], string[], string[], (List<string>, List<string>) > multiTableInit = (objects, _tb_name, _time) => {
+            List<string> tb_name = _tb_name == null? new List<string>{ SetTableNameWith(objects[0]) } : new List<string>(_tb_name);
+            List<string> time = _time == null? new List<string>{ "NOW" } : new List<string>(_time);
+            if (tb_name.Count < objects.Length) {
+                for (int i=tb_name.Count; i<objects.Length; i++) {
+                    tb_name.Add(String.Empty);
+                }
+            }
+            if (time.Count < objects.Length) {
+                for (int i=time.Count; i<objects.Length; i++) {
+                    time.Add("NOW");
+                }
+            }
+            return (tb_name, time);            
+        };
 //ALTER TABLE tb_name SET TAG tag1_name=new_tag1_value; ALTER TABLE tb_name SET TAG tag1_name=new_tag1_value;
         public static List<string> SetTags(UnityEngine.Object obj, string db_name = null, string tb_name = null) {
             string action  = "ALTER TABLE ";
@@ -250,12 +404,6 @@ public partial class TDBridge
             }
             return action + db_name + Dot + tb_name + operation + tag_name + "=" + new_tag_value;
         }
-// return action + db_name + Dot + tb_name + operation + tag_name
-        // static Func<UnityEngine.Object, string, string, string> SetTagsOf = (obj, db_name, string tb_name) => {
-        //     string action  = "ALTER TABLE ";
-        //     string operation = " SET TAG ";
-        //     return "sss";
-        // };
         public static string FieldNames(UnityEngine.Object obj, string timestamp_field_name = "ts") {
             return FieldNames( obj.GetType(), timestamp_field_name);
         }
@@ -272,6 +420,23 @@ public partial class TDBridge
                 }
             }
             return Bracket( string.Join(", ", fieldNames) );
+        }
+        public static string TagNames(UnityEngine.Object obj) {
+            return TagNames(obj.GetType());
+        }
+        public static string TagNames<T>() {
+            return TagNames(typeof(T));
+        }
+        //(location, groupId)
+        public static string TagNames( System.Type type) {
+            List<string> tagNames = new List<string>();
+            foreach (var field in type.GetFields()) {
+                DataTag dt = Attribute.GetCustomAttribute(field, typeof(DataTag)) as DataTag;
+                if ( dt != null) {
+                    tagNames.Add(field.Name);
+                }
+            }
+            return Bracket( string.Join(", ", tagNames) );
         }
         public static string FieldTypes<T>(string timestamp_field_name = "ts") {
             List<string> fieldTypes = new List<string>{ Quote(timestamp_field_name) + " TIMESTAMP" };
@@ -357,9 +522,10 @@ public partial class TDBridge
                 }
             }
             return " TAGS" + Bracket( string.Join(", " , tagValues) );
-        }
+        }       
         static Func<UnityEngine.Object, FieldInfo, int, string> serializeValue = (obj, field, textLength) => {
             var fieldValue =  field.GetValue(obj);
+            if (fieldValue == null) return "NULL";
             int typeIndex = varType.IndexOf(field.FieldType);
             switch (typeIndex)
             {

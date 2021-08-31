@@ -5,6 +5,7 @@ using UnityEngine.Networking;
 using System;
 namespace Sean21
 {
+[Serializable]
 public class TDRequest
 {
     private TDBridge i = TDBridge.i;
