@@ -64,7 +64,7 @@ public partial class TDBridge : MonoBehaviour
     }
     [Serializable]
     public struct ColumnMeta {
-        public string attribute;
+        public string name;
         public int typeIndex;
         public int length;
         public bool isResizable{
@@ -72,7 +72,7 @@ public partial class TDBridge : MonoBehaviour
             private set;
         }
         public ColumnMeta( string a, int t, int l) {
-            this.attribute = a;
+            this.name = a;
             this.typeIndex = t;
             this.length = l;
             this.isResizable = (t == dataType.IndexOf("nchar") || t == dataType.IndexOf("binary"));
@@ -92,6 +92,9 @@ public partial class TDBridge : MonoBehaviour
     }    
     const string Dot = ".";
     const string Space = " ";
+
+    public static readonly List<System.Type> varType = new List<System.Type>{ typeof(System.Object), typeof(System.Boolean), typeof(System.Byte), typeof(System.Int16), typeof(System.Int32), typeof(System.Int64), typeof(System.Single), typeof(System.Double), typeof(bin), typeof(System.DateTime),typeof(System.String) };
+    public static readonly List<string> dataType = new List<string>{ "unkown", "bool", "tinyint", "smallint", "int", "bigint", "float", "double", "binary", "timestamp", "nchar" };
     void Awake()
     {
         Initialize();
@@ -245,9 +248,11 @@ public partial class TDBridge : MonoBehaviour
     static string Bracket(float f) {
         return Bracket(f.ToString(), true);
     }
-    static bool isValidForName(char c)
-    {
+    static bool isValidForName(char c) {
         return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || (c == '_');
+    }
+    static bool isTextData(int typeIndex) {
+        return (typeIndex == 8 || typeIndex == 10)? true:false;
     }
 }
 //For BINARY type in the database.

@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System;
@@ -7,8 +7,6 @@ namespace Sean21
 {
 public partial class TDBridge
 {
-    public static List<System.Type> varType = new List<System.Type>{ typeof(System.Object), typeof(System.Boolean), typeof(System.Byte), typeof(System.Int16), typeof(System.Int32), typeof(System.Int64), typeof(System.Single), typeof(System.Double), typeof(bin), typeof(System.DateTime),typeof(System.String) };
-    public static List<string> dataType = new List<string>{ "unkown", "bool", "tinyint", "smallint", "int", "bigint", "float", "double", "binary", "timestamp", "nchar" };
     public static void CreateSTable<T>(string db_name = null, string stb_name = null, string timestamp_field_name = "ts", bool if_not_exists = true) {
         string sql = SQL.CreateSTable<T>(db_name, stb_name, timestamp_field_name, if_not_exists);
         PushSQL(sql);
@@ -144,14 +142,14 @@ public partial class TDBridge
     //ignore the primary key (timestamp) column.
             if(currentMeta.IndexOf(col) > 0) {
                 foreach(ColumnMeta newCol in newMeta) {
-                    if (col.attribute.Equals(newCol.attribute.ToLower()) && col.typeIndex == newCol.typeIndex) {
+                    if (col.name.Equals(newCol.name.ToLower()) && col.typeIndex == newCol.typeIndex) {
                         shouldDrop = false;
                         int type = col.typeIndex;
     //For binary and nchar
-                        if (type == 8 || type == 10 ) {
+                        if ( isTextData(type) ) {
                             if (col.length < newCol.length) {
                                 resizing.Add(i.StartCoroutine(
-                                    Push(action + Quote(db_name) + Dot + Quote(tb_name) + resize + col.attribute +
+                                    Push(action + Quote(db_name) + Dot + Quote(tb_name) + resize + col.name +
                                         Space + dataType[type] + Bracket(newCol.length.ToString())
                                     )
                                 ));
@@ -167,10 +165,10 @@ public partial class TDBridge
             if (shouldDrop) {
                 dropping.Add(
                     i.StartCoroutine(
-                    Push(action + db_name + Dot + tb_name + drop + col.attribute)
+                    Push(action + db_name + Dot + tb_name + drop + col.name)
                 ));
                 dropped.Add(col);
-                Debug.LogWarning("Culomn " + col.attribute + " has been dropped, with all the data inside lost!");
+                Debug.LogWarning("Culomn " + col.name + " has been dropped, with all the data inside lost!");
             }
         }
         foreach (ColumnMeta col in dropped ) { yield return currentMeta.Remove(col);}
@@ -181,7 +179,7 @@ public partial class TDBridge
         foreach(ColumnMeta newCol in newMeta) {
             bool shouldAdd = true;
             foreach(ColumnMeta col in currentMeta) {
-                if (col.attribute.Equals(newCol.attribute.ToLower())) {
+                if (col.name.Equals(newCol.name.ToLower())) {
                     shouldAdd = false;
                     break;
                 }
@@ -190,7 +188,7 @@ public partial class TDBridge
                 string lengthDeclaration = newCol.isResizable? Bracket(newCol.length):string.Empty;
                 adding.Add(
                     i.StartCoroutine(
-                        Push(action + db_name + Dot + tb_name + add + newCol.attribute +
+                        Push(action + db_name + Dot + tb_name + add + newCol.name +
                             Space + dataType[newCol.typeIndex] + lengthDeclaration
                             )
                 ));
@@ -202,7 +200,7 @@ public partial class TDBridge
         Debug.Log(dropping.Count + " columns dropped, " + resizing.Count + " columns resized, " + adding.Count + " columns added.");
         foreach (ColumnMeta col_dropped in dropped) {
             foreach (ColumnMeta col_added in added) {
-                if (col_added.attribute == col_dropped.attribute) {
+                if (col_added.name == col_dropped.name) {
                     Debug.LogWarning("Some column(s) were added after dropped. That changed the sequence of the columns. The Insert(Object) method no longer works now!" +
                     "\n Solution A: Change the class' fields order according to the table in the database." + 
                     "\n Solution B: Instead of Insert(Object), Use the InsertSpecific(Object) method in the future, at the cost of performance.");
@@ -445,7 +443,7 @@ public partial class TDBridge
                 if ( df != null) {
                     int typeIndex = varType.IndexOf(field.FieldType);
                     string typeOfThis = " '" + field.Name + "' " + dataType[typeIndex];
-                    if (typeIndex == dataType.IndexOf("nchar") || typeIndex == dataType.IndexOf("binary")) {
+                    if (isTextData(typeIndex)) {
                         typeOfThis += Bracket( df.length.ToString() );
                     }
                     fieldTypes.Add(typeOfThis);
@@ -460,7 +458,7 @@ public partial class TDBridge
                 if ( df != null) {
                     int typeIndex = varType.IndexOf(field.FieldType);
                     string typeOfThis = " '" + field.Name + "' " + dataType[typeIndex];
-                    if (typeIndex == dataType.IndexOf("nchar") || typeIndex == dataType.IndexOf("binary")) {
+                    if (isTextData(typeIndex)) {
                         typeOfThis += Bracket( df.length.ToString() );
                     }
                     fieldTypes.Add(typeOfThis);
@@ -482,7 +480,7 @@ public partial class TDBridge
                 if ( dt != null ) {
                     int typeIndex = varType.IndexOf(field.FieldType);
                     string typeOfThis = " '" + field.Name + "' " + dataType[typeIndex];
-                    if (typeIndex == 8 || typeIndex == 10) {
+                    if (isTextData(typeIndex)) {
                         typeOfThis += Bracket( dt.length.ToString() );
                     }
                     tagTypes.Add(typeOfThis);
@@ -493,11 +491,8 @@ public partial class TDBridge
         static Func<FieldInfo, int, string> serializeType = (field, length) => {
             int typeIndex = varType.IndexOf(field.FieldType);
             string typeOfThis = " '" + field.Name + "' " + dataType[typeIndex];
-            switch (typeIndex)
-            {
-                case 8: case 10: return typeOfThis + Bracket( length.ToString() );
-                default: return typeOfThis;
-            }
+            if(isTextData(typeIndex)) return typeOfThis + Bracket( length.ToString() );
+            else return typeOfThis;
         };
 //VALUES (NOW, 10.2, 219, 0.32)
         public static string FieldValues(UnityEngine.Object obj, string timestamp = "NOW") {

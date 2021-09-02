@@ -24,9 +24,11 @@ public class DataManager : MonoBehaviour
         // TDBridge.SetTag(meterList[0],"name");
         // TDBridge.CreateSTable<AlterSTable>();
         // TDBridge.InsertSpecificUsing(meterList.ToArray());
-        TDBridge.InsertUsing(meterList.ToArray());
+        // TDBridge.InsertUsing(meterList.ToArray());
         // TDBridge.InsertUsing(meterList[0]);
         // StartCoroutine( TDBridge.AlterSTableOf<TH_Meter>() );
+        StartCoroutine(AddMeter());
+        // StartCoroutine(AddPlainMeter());
     }
 
     void Start()
@@ -38,6 +40,18 @@ public class DataManager : MonoBehaviour
     void Update()
     {
         
+    }
+    IEnumerator AddMeter() {
+        TDRequest r = new TDRequest("select * from test.th_meter limit 1");
+        yield return r.Send();
+        TH_Meter t = gameObject.AddComponent<TH_Meter>() as TH_Meter;
+        TDBridge.FromTD(ref t, r.result);
+    }
+    IEnumerator AddPlainMeter() {
+        TDRequest r = new TDRequest("select * from test.th_meter limit 1");
+        yield return r.Send();
+        TH_Meter_Plain plainMeter = TDBridge.FromTD<TH_Meter_Plain>(r.result);
+        Debug.Log(plainMeter.id + " " + plainMeter.name + " " + plainMeter.temperature);
     }
     IEnumerator DropTables() {
         for (int i=10; i<30; i++) {
