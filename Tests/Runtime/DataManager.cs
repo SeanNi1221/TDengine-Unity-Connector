@@ -27,7 +27,7 @@ public class DataManager : MonoBehaviour
         // TDBridge.InsertUsing(meterList.ToArray());
         // TDBridge.InsertUsing(meterList[0]);
         // StartCoroutine( TDBridge.AlterSTableOf<TH_Meter>() );
-        StartCoroutine(AddMeter());
+        // StartCoroutine(AddMeter());
         // StartCoroutine(AddPlainMeter());
     }
 
@@ -44,7 +44,8 @@ public class DataManager : MonoBehaviour
     IEnumerator AddMeter() {
         TDRequest r = new TDRequest("select * from test.th_meter limit 1");
         yield return r.Send();
-        TH_Meter t = gameObject.AddComponent<TH_Meter>() as TH_Meter;
+        // TH_Meter t = gameObject.AddComponent<TH_Meter>();
+        var t = gameObject.AddComponent<TH_Meter>();
         TDBridge.FromTD(ref t, r.result);
     }
     IEnumerator AddPlainMeter() {

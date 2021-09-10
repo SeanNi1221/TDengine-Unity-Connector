@@ -7,6 +7,9 @@ namespace Sean21
 {
 public partial class TDBridge
 {
+    public static void CreateDatabase(string db_name = null, bool if_not_exists = true) {
+        PushSQL(SQL.CreateDatabase(db_name, if_not_exists));
+    }
     public static void CreateSTable<T>(string db_name = null, string stb_name = null, string timestamp_field_name = "ts", bool if_not_exists = true) {
         string sql = SQL.CreateSTable<T>(db_name, stb_name, timestamp_field_name, if_not_exists);
         PushSQL(sql);
@@ -210,6 +213,20 @@ public partial class TDBridge
     }
     public static partial class SQL
     {
+// select * from test.th_meter limit 1
+        public static string GetFirstRowWithoutTS(UnityEngine.Object obj, string db_name = null, string tb_name = null) {
+            string action = "SELECT ";
+            string option = " LIMIT 1";
+            db_name = SetDatabaseName(db_name);
+            tb_name = SetTableNameWith(obj, tb_name);
+            string columnNames = ColumnNamesWithoutTS(obj);
+            return action + columnNames + " FROM " + db_name + Dot + tb_name + option; 
+        }
+        public static string CreateDatabase(string db_name = null, bool if_not_exists = true) {
+            string action = if_not_exists? "CREATE DATABASE IF NOT EXISTS ":"CREATE DATABASE ";
+            db_name = SetDatabaseName(db_name);
+            return action + db_name;
+        }
         public static string CreateSTable<T>(string db_name = null, string stb_name = null, string timestamp_field_name = "ts", bool if_not_exists = true) {
             string action = if_not_exists? "CREATE STABLE IF NOT EXISTS ":"CREATE STABLE ";
             db_name = SetDatabaseName(db_name);
@@ -402,14 +419,14 @@ public partial class TDBridge
             }
             return action + db_name + Dot + tb_name + operation + tag_name + "=" + new_tag_value;
         }
-        public static string FieldNames(UnityEngine.Object obj, string timestamp_field_name = "ts") {
-            return FieldNames( obj.GetType(), timestamp_field_name);
+        public static string FieldNames(UnityEngine.Object obj, string timestamp_field_name = "ts", bool withBracket = true) {
+            return FieldNames( obj.GetType(), timestamp_field_name, withBracket);
         }
-        public static string FieldNames<T>(string timestamp_field_name = "ts") {
-            return FieldNames( typeof(T), timestamp_field_name);
+        public static string FieldNames<T>(string timestamp_field_name = "ts", bool withBracket = true) {
+            return FieldNames( typeof(T), timestamp_field_name, withBracket);
         }
         //(ts, current, phase)
-        public static string FieldNames( System.Type type, string timestamp_field_name = "ts") {
+        public static string FieldNames( System.Type type, string timestamp_field_name = "ts", bool withBracket = true) {
             List<string> fieldNames = new List<string>{ Quote(timestamp_field_name) };
             foreach (var field in type.GetFields()) {
                 DataField df = Attribute.GetCustomAttribute(field, typeof(DataField)) as DataField;
@@ -417,16 +434,36 @@ public partial class TDBridge
                     fieldNames.Add(field.Name);
                 }
             }
-            return Bracket( string.Join(", ", fieldNames) );
+            string names = string.Join(", ", fieldNames);
+            return withBracket? Bracket(names) : names;
         }
-        public static string TagNames(UnityEngine.Object obj) {
-            return TagNames(obj.GetType());
+        public static string ColumnNamesWithoutTS(UnityEngine.Object obj,  bool withBracket = false) {
+            return ColumnNamesWithoutTS( obj.GetType(), withBracket);
         }
-        public static string TagNames<T>() {
-            return TagNames(typeof(T));
+        public static string ColumnNamesWithoutTS<T>(bool withBracket = false) {
+            return ColumnNamesWithoutTS( typeof(T), withBracket);
+        }
+//(current, phase, location)
+        public static string ColumnNamesWithoutTS( System.Type type, bool withBracket = false) {
+            List<string> columnNames = new List<string>();
+            foreach (var field in type.GetFields()) {
+                DataTag dt = Attribute.GetCustomAttribute(field, typeof(DataTag)) as DataTag;
+                DataField df = Attribute.GetCustomAttribute(field, typeof(DataField)) as DataField;
+                if ( dt!= null || df != null ) {
+                    columnNames.Add(field.Name);
+                }
+            }
+            string names = string.Join(", ", columnNames);
+            return withBracket? Bracket(names) : names;
+        }
+        public static string TagNames(UnityEngine.Object obj, bool withBracket = true) {
+            return TagNames(obj.GetType(), withBracket);
+        }
+        public static string TagNames<T>(bool withBracket = true) {
+            return TagNames(typeof(T), withBracket);
         }
         //(location, groupId)
-        public static string TagNames( System.Type type) {
+        public static string TagNames( System.Type type, bool withBracket = true) {
             List<string> tagNames = new List<string>();
             foreach (var field in type.GetFields()) {
                 DataTag dt = Attribute.GetCustomAttribute(field, typeof(DataTag)) as DataTag;
@@ -434,7 +471,8 @@ public partial class TDBridge
                     tagNames.Add(field.Name);
                 }
             }
-            return Bracket( string.Join(", ", tagNames) );
+            string names = string.Join(", ", tagNames);
+            return withBracket? Bracket( names ) : names;
         }
         public static string FieldTypes<T>(string timestamp_field_name = "ts") {
             List<string> fieldTypes = new List<string>{ Quote(timestamp_field_name) + " TIMESTAMP" };

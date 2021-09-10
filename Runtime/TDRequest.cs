@@ -8,7 +8,6 @@ namespace Sean21
 [Serializable]
 public class TDRequest
 {
-    private TDBridge i = TDBridge.i;
     public TDBridge.TimeEncoding timeEncoding;
     public UnityWebRequest web;
     public UnityWebRequestAsyncOperation operation;
@@ -42,10 +41,6 @@ public class TDRequest
             Debug.Log("Successfully sent Request: \n" + sql);
             this.json = web.downloadHandler.text;
             this.result = TDBridge.Parse(json);
-#if UNITY_EDITOR                        
-            i.jsonText = this.json;
-            i.result = this.result;
-#endif  
             yield break;
         }
     }

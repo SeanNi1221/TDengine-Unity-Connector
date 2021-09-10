@@ -6,27 +6,30 @@ using System;
 namespace Sean21
 {
 public partial class TDBridge
-{
+{   
     public static T FromTD<T>(Result result, int row = 0) {
         return (T)FromTD(result, typeof(T), row);
     }
 
     public static object FromTD(Result result, Type type, int row = 0) {
-        object obj = Activator.CreateInstance(type);
+        UnityEngine.Object obj = (UnityEngine.Object)Activator.CreateInstance(type);
         return FromTD(ref obj, result, type, row);
     }
     public static T FromTD<T>(ref T obj, Result result, int row = 0) {
-        object _obj = obj as object;
+        UnityEngine.Object _obj = obj as UnityEngine.Object;
+        Debug.Log("Type: " + typeof(T).Name);
         return (T)FromTD(ref _obj, result, typeof(T), row);
     }
-    public static object FromTD(ref object obj, Result result, int row = 0) {
+    public static object FromTD(ref UnityEngine.Object obj, Result result, int row = 0) {
         return FromTD(ref obj, result, obj.GetType(), row);
     }
-    private static object FromTD(ref object obj, Result result, Type type, int row = 0) {
+    private static object FromTD(ref UnityEngine.Object obj, Result result, Type type, int row = 0) {
+        Debug.Log("Deserializing type: " + type.Name);
         //Ignore timestamp primary key.
         for (int i= 1;i < result.column_meta.Count; i++) {
             ColumnMeta col = result.column_meta[i];
             FieldInfo field = type.GetField(col.name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            Debug.Log("Got field: " + field.Name);
             field.SetValue( obj, deserializeValue(result.data[row].value[i], col.typeIndex) );
         }
         return obj;        

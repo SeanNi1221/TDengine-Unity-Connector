@@ -99,6 +99,10 @@ public partial class TDBridge : MonoBehaviour
     {
         Initialize();
     }
+    void OnValidate()
+    {
+        SetInstance(); FetchURI(); FetchHeader();
+    }
     public static void Login() {
         i.StartCoroutine(i.Login_co());
     }
@@ -153,17 +157,22 @@ public partial class TDBridge : MonoBehaviour
     };
     public void Initialize()
     {
+        SetInstance();
+        FetchURI();
+        FetchHeader();
+        jsonText = null;
+        result = null;
+        Debug.Log("TDBridge initialized." + 
+        "\n Authorization Method: " + authorizationMethod + ", token:" + token + ", IP:" + ip);
+    }
+    private void SetInstance()
+    {
         if (!i) {
             i = this;
         }
         else if (i != this){
             Debug.LogWarning ("Multiple is of TDBridge is running, this may cause unexpected behaviours!. The newer i is ignored!");
         }
-        FetchURI();
-        FetchHeader();
-        jsonText = null;
-        result = null;
-        Debug.Log("TDBridge initialized.");
     }
     private void FetchURI() {
         if (Application.isEditor) {
@@ -182,7 +191,6 @@ public partial class TDBridge : MonoBehaviour
         {
             case AuthorizationMethod.Basic:
                 token = Base64Encode(userName + ":" + password);
-                Debug.Log ("Method:" + authorizationMethod + ", token:" + token + ", IP:" + ip);
                 header = "Basic " + token;
                 break;
             case AuthorizationMethod.Taosd:
