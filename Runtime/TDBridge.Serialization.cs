@@ -14,6 +14,10 @@ public partial class TDBridge
         string sql = SQL.CreateSTable<T>(db_name, stb_name, timestamp_field_name, if_not_exists);
         PushSQL(sql);
     }
+    public static void CreateSTable(UnityEngine.Object obj, string db_name = null, string stb_name = null, string timestamp_field_name = "ts", bool if_not_exists = true) {
+        string sql = SQL.CreateSTable(obj, db_name, stb_name, timestamp_field_name, if_not_exists);
+        PushSQL(sql);
+    }
     public static void CreateTable<T>(string db_name = null, string tb_name = null, string timestamp_field_name = "ts", bool if_not_exists = true) {
         string sql = SQL.CreateTable<T>(db_name, tb_name,timestamp_field_name,if_not_exists);
         PushSQL(sql);
@@ -228,13 +232,19 @@ public partial class TDBridge
             return action + db_name;
         }
         public static string CreateSTable<T>(string db_name = null, string stb_name = null, string timestamp_field_name = "ts", bool if_not_exists = true) {
+            return CreateSTable(typeof(T), db_name, stb_name, timestamp_field_name, if_not_exists);
+        }
+        public static string CreateSTable(UnityEngine.Object obj, string db_name = null, string stb_name = null, string timestamp_field_name = "ts", bool if_not_exists = true) {
+            return CreateSTable(obj.GetType(), db_name, stb_name, timestamp_field_name, if_not_exists);
+        }
+        public static string CreateSTable(Type type, string db_name = null, string stb_name = null, string timestamp_field_name = "ts", bool if_not_exists = true) {
             string action = if_not_exists? "CREATE STABLE IF NOT EXISTS ":"CREATE STABLE ";
             db_name = SetDatabaseName(db_name);
-            stb_name = SetSTableNameWith<T>(stb_name);
-            string fieldTypes = FieldTypes<T>(timestamp_field_name);
-            string tagTypes = TagTypes<T>();
+            stb_name = SetSTableNameWith(type, stb_name);
+            string fieldTypes = FieldTypes(type, timestamp_field_name);
+            string tagTypes = TagTypes(type);
             string sql = action + Quote(db_name) + Dot + Quote(stb_name) + fieldTypes + tagTypes;
-            Debug.Log("SQL- CREATE STABLE from type " + typeof(T).Name + ":" + "\n" + sql);
+            Debug.Log("SQL- CREATE STABLE from type " + type.Name + ":" + "\n" + sql);
             return sql;
         }
         public static string CreateTable<T>(string db_name = null, string tb_name = null, string timestamp_field_name = "ts", bool if_not_exists = true) {
@@ -475,23 +485,14 @@ public partial class TDBridge
             return withBracket? Bracket( names ) : names;
         }
         public static string FieldTypes<T>(string timestamp_field_name = "ts") {
-            List<string> fieldTypes = new List<string>{ Quote(timestamp_field_name) + " TIMESTAMP" };
-            foreach (var field in typeof(T).GetFields()) {            
-                DataField df = Attribute.GetCustomAttribute(field, typeof(DataField)) as DataField;
-                if ( df != null) {
-                    int typeIndex = varType.IndexOf(field.FieldType);
-                    string typeOfThis = " '" + field.Name + "' " + dataType[typeIndex];
-                    if (isTextData(typeIndex)) {
-                        typeOfThis += Bracket( df.length.ToString() );
-                    }
-                    fieldTypes.Add(typeOfThis);
-                }
-            }
-            return Bracket( string.Join(", ", fieldTypes) );
+            return FieldTypes(typeof(T), timestamp_field_name);
         }
         public static string FieldTypes(UnityEngine.Object obj, string timestamp_field_name = "ts") {
+            return FieldTypes(obj.GetType(), timestamp_field_name);
+        }
+        public static string FieldTypes(Type type, string timestamp_field_name = "ts") {
             List<string> fieldTypes = new List<string>{ "'" + timestamp_field_name + "'" + " TIMESTAMP" };
-            foreach (var field in obj.GetType().GetFields()) {            
+            foreach (var field in type.GetFields()) {            
                 DataField df = Attribute.GetCustomAttribute(field, typeof(DataField)) as DataField;
                 if ( df != null) {
                     int typeIndex = varType.IndexOf(field.FieldType);

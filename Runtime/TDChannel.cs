@@ -34,7 +34,6 @@ public class TDChannel : MonoBehaviour
                 }
             }
         }
-
     }
     private void SetDefaultValues()
     {
@@ -50,15 +49,46 @@ public class TDChannel : MonoBehaviour
     }
     public void CreateDatabase()
     {
-        TDBridge.CreateDatabase(databaseName);
+        request.sql = TDBridge.SQL.CreateDatabase(databaseName);
+        StartCoroutine(request.Send());
     }
-    public void CreateTableForTarget()
+
+    public void CreateSuperTableForTarget()
     {
-        TDBridge.CreateTableUsing(target, databaseName, tableName, superTableName );
+        request.sql = TDBridge.SQL.CreateSTable(target, databaseName, superTableName);
+        StartCoroutine(request.Send());
     }
-    public void PushTags()
+    public void DropSuperTableForTarget()
     {
-        StartCoroutine(TDBridge.SetTags(target, databaseName, tableName));
+        request.sql = "DROP STABLE IF EXISTS " + databaseName + "." + superTableName;
+        StartCoroutine(request.Send());
+    }
+    public void CreateTableForTarget(bool usingSTable = true)
+    {
+        if (usingSTable) {
+            request.sql = TDBridge.SQL.CreateTableUsing(target, databaseName, tableName, superTableName );
+            StartCoroutine(request.Send());
+        }
+        else {
+            request.sql = TDBridge.SQL.CreateTable(target, databaseName, tableName);
+            StartCoroutine(request.Send());
+        }
+    }
+    public void DropTableForTarget()
+    {
+        request.sql = "DROP TABLE IF EXISTS " + databaseName + "." + tableName;
+        StartCoroutine(request.Send());
+    }
+    public void SetTags()
+    {
+        StartCoroutine(SetTagsCo());
+    }
+    public IEnumerator SetTagsCo() {
+        List<string> sqls = TDBridge.SQL.SetTags(target, databaseName, tableName);
+        foreach (string _sql in sqls) {
+            request.sql = _sql;
+            yield return request.Send();
+        }
     }
     public void SendRequest()
     {
@@ -76,6 +106,9 @@ public class TDChannel : MonoBehaviour
         Debug.Log("Target Type: " + targetType.Name);
         TDBridge.FromTD(ref target, request.result);
     }
-
+    public void Alter()
+    {
+        StartCoroutine(TDBridge.AlterSTableOf(target, databaseName, superTableName));
+    }
 }
 }
