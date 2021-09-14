@@ -13,6 +13,7 @@ public class TDChannel : MonoBehaviour
     public string superTableName;
     public string tableName;
     public TDRequest request;
+    public bool usingSuperTable = true;
     void Awake()
     {
         GetTarget();
@@ -63,9 +64,9 @@ public class TDChannel : MonoBehaviour
         request.sql = "DROP STABLE IF EXISTS " + databaseName + "." + superTableName;
         StartCoroutine(request.Send());
     }
-    public void CreateTableForTarget(bool usingSTable = true)
+    public void CreateTableForTarget()
     {
-        if (usingSTable) {
+        if (usingSuperTable) {
             request.sql = TDBridge.SQL.CreateTableUsing(target, databaseName, tableName, superTableName );
             StartCoroutine(request.Send());
         }

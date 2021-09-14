@@ -117,7 +117,11 @@ public partial class TDBridge : MonoBehaviour
             Debug.Log ("Method:" + authorizationMethod + ", token:" + token + ", IP:" + ip);
 #endif
             header = "Taosd " + token;
+#if UNITY_2020_1_OR_NEWER
+            if (request.result == UnityWebRequest.Result.ConnectionError || request.result == UnityWebRequest.Result.ProtocolError)
+#else 
             if (request.isNetworkError || request.isHttpError)
+#endif
             {
                 Debug.LogError(request.error);
                 yield break;
@@ -134,7 +138,11 @@ public partial class TDBridge : MonoBehaviour
         using ( UnityWebRequest request = UnityWebRequest.Put(uri, sql) ){
             request.SetRequestHeader("Authorization", i.header);
             yield return request.SendWebRequest();                
+#if UNITY_2020_1_OR_NEWER
+            if (request.result == UnityWebRequest.Result.ConnectionError || request.result == UnityWebRequest.Result.ProtocolError)
+#else 
             if (request.isNetworkError || request.isHttpError)
+#endif
             {
                 Debug.LogError("Failed pushing SQL: \n" + sql + "\n with error: " + request.error + requestHint(request.responseCode));
                 yield break;

@@ -33,7 +33,11 @@ public class TDRequest
             Debug.Log("Connecting: " + web.uri);
             web.SetRequestHeader("Authorization", TDBridge.i.header);
             yield return operation = web.SendWebRequest();
+#if UNITY_2020_1_OR_NEWER
+            if (web.result == UnityWebRequest.Result.ConnectionError || web.result == UnityWebRequest.Result.ProtocolError)
+#else 
             if (web.isNetworkError || web.isHttpError)
+#endif
             {
                 Debug.LogError("Failed sending Request: " + sql + " with error: " + web.error + TDBridge.requestHint(web.responseCode));
                 yield break;

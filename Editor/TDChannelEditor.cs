@@ -13,7 +13,7 @@ public class TDChannelEditor : Editor
     SerializedProperty superTableNameProp;
     SerializedProperty tableNameProp;
     SerializedProperty requestProp;
-    public bool usingSuperTable = true;
+    SerializedProperty usingSuperTableProp;
     void OnEnable()
     {
         targetProp = serializedObject.FindProperty("target");
@@ -21,6 +21,7 @@ public class TDChannelEditor : Editor
         superTableNameProp = serializedObject.FindProperty("superTableName");
         tableNameProp = serializedObject.FindProperty("tableName");
         requestProp = serializedObject.FindProperty("request");
+        usingSuperTableProp = serializedObject.FindProperty("usingSuperTable");
     }
     public override void OnInspectorGUI()
     {        
@@ -64,10 +65,11 @@ public class TDChannelEditor : Editor
 
         //Table
         EditorGUILayout.PropertyField(tableNameProp);
-        usingSuperTable = EditorGUILayout.Toggle("Using Super Table", usingSuperTable);
+        EditorGUILayout.PropertyField(usingSuperTableProp);
+        // usingSuperTable = EditorGUILayout.Toggle("Using Super Table", usingSuperTable);
         GUILayout.BeginHorizontal();
         if ( GUILayout.Button(create, GUILayout.Height(24)) ){
-            td.CreateTableForTarget(usingSuperTable);
+            td.CreateTableForTarget();
         }
         if ( GUILayout.Button(drop, GUILayout.Width(32), GUILayout.Height(24) ) ){
             td.DropTableForTarget();
@@ -94,7 +96,9 @@ public class TDChannelEditor : Editor
         if (GUILayout.Button(send, GUILayout.Height(32)))
         {
             td.SendRequest();           
-        }        
+        }
+
+        serializedObject.ApplyModifiedProperties();        
     }
 }
 }
