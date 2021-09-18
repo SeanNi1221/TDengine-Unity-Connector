@@ -14,6 +14,8 @@ public class TDChannelEditor : Editor
     SerializedProperty tableNameProp;
     SerializedProperty requestProp;
     SerializedProperty usingSuperTableProp;
+    SerializedProperty autoCreateProp;
+    SerializedProperty insertSpecificProp;
     void OnEnable()
     {
         targetProp = serializedObject.FindProperty("target");
@@ -22,6 +24,8 @@ public class TDChannelEditor : Editor
         tableNameProp = serializedObject.FindProperty("tableName");
         requestProp = serializedObject.FindProperty("request");
         usingSuperTableProp = serializedObject.FindProperty("usingSuperTable");
+        autoCreateProp = serializedObject.FindProperty("autoCreate");
+        insertSpecificProp = serializedObject.FindProperty("insertSpecific");
     }
     public override void OnInspectorGUI()
     {        
@@ -30,14 +34,18 @@ public class TDChannelEditor : Editor
         GUIContent dropS = new GUIContent( (Texture)Resources.Load("removeS"), "Drop Super Table");
         GUIContent create = new GUIContent(" Create Table", (Texture)Resources.Load("create"), "Create Table for Target");
         GUIContent drop = new GUIContent( (Texture)Resources.Load("remove"), "Drop Table");
-        GUIContent pull = new GUIContent(" Pull", (Texture)Resources.Load("pull"), "Pull all values from the table");
-        GUIContent push = new GUIContent(" Push", (Texture)Resources.Load("push"), "Push values into the table (for tags only)");
+        GUIContent pull = new GUIContent(" Pull All", (Texture)Resources.Load("pull"), "Pull all values from the table");
+        GUIContent push = new GUIContent(" Set Tags", (Texture)Resources.Load("push"), "Push values into the table (for tags only)");
         GUIContent alter = new GUIContent( (Texture)Resources.Load("alter"), "Alter Super Table\n \n"+
             "Performs the following operations: \n"+
             "1. Drop all columns that no longer exists in Target class.\n"+
             "2. Resize NCHAR and BINARY columns if needed, according to Target class.\n"+
             "3. Add new columns of Target class into the super table.\n"+
             "*Note: NCHAR/BINARY columns with shorter length in the Target class than in the table will be DROPPED and re-created.");
+        GUIContent autoCreateLabel = new GUIContent("Auto Create", "On insert, auto create table if not exists using the super table.");
+        GUIContent insertSpecificLabel = new GUIContent(" Insert Specific", "Turn this on if the sequence of fields differ from that of comlumns in the table.");
+
+        GUIContent insert = new GUIContent(" Insert", (Texture)Resources.Load("insert"), "Insert Values");
         GUIContent send = new GUIContent(" Send Request", (Texture)Resources.Load("terminal"), "Send SQL Request");
         
         TDChannel td = (TDChannel)target;
@@ -66,7 +74,6 @@ public class TDChannelEditor : Editor
         //Table
         EditorGUILayout.PropertyField(tableNameProp);
         EditorGUILayout.PropertyField(usingSuperTableProp);
-        // usingSuperTable = EditorGUILayout.Toggle("Using Super Table", usingSuperTable);
         GUILayout.BeginHorizontal();
         if ( GUILayout.Button(create, GUILayout.Height(24)) ){
             td.CreateTableForTarget();
@@ -80,7 +87,7 @@ public class TDChannelEditor : Editor
         //Pull & Push
         GUILayout.BeginHorizontal();
         if ( GUILayout.Button(pull, GUILayout.Height(24)) ){
-            td.PullValues();
+            td.Pull();
         }
         if ( GUILayout.Button(push, GUILayout.Height(24)) ){
             td.SetTags();
@@ -90,6 +97,13 @@ public class TDChannelEditor : Editor
         } 
         GUILayout.EndHorizontal();
         GUILayout.Space(16);
+        
+        //Insert
+        EditorGUILayout.PropertyField(autoCreateProp, autoCreateLabel);
+        EditorGUILayout.PropertyField(insertSpecificProp, insertSpecificLabel);
+        if ( GUILayout.Button(insert, GUILayout.Height(24)) ){
+            td.Insert();
+        }        
 
         //Request
         EditorGUILayout.PropertyField(requestProp);

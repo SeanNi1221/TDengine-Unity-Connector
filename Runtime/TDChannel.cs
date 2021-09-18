@@ -14,6 +14,8 @@ public class TDChannel : MonoBehaviour
     public string tableName;
     public TDRequest request;
     public bool usingSuperTable = true;
+    public bool autoCreate = false;
+    public bool insertSpecific = false;
     void Awake()
     {
         GetTarget();
@@ -95,11 +97,11 @@ public class TDChannel : MonoBehaviour
     {
         StartCoroutine(request.Send());
     }
-    public void PullValues()
+    public void Pull()
     {
-        StartCoroutine(PullValuesCo());
+        StartCoroutine(PullCo());
     }
-    public IEnumerator PullValuesCo()
+    public IEnumerator PullCo()
     {
         request.sql = TDBridge.SQL.GetFirstRowWithoutTS(target, databaseName, tableName);
         yield return request.Send();
@@ -110,6 +112,26 @@ public class TDChannel : MonoBehaviour
     public void Alter()
     {
         StartCoroutine(TDBridge.AlterSTableOf(target, databaseName, superTableName));
+    }
+    public void Insert()
+    {
+        if (autoCreate) {
+            if (insertSpecific) {
+                request.sql = TDBridge.SQL.InsertSpecificUsing(target, databaseName, superTableName, tableName );
+            }
+            else {
+                request.sql = TDBridge.SQL.InsertUsing(target, databaseName, superTableName, tableName );
+            }
+        }
+        else {
+            if (insertSpecific) {
+                request.sql = TDBridge.SQL.InsertSpecific(target, databaseName, tableName );
+            }
+            else {
+                request.sql = TDBridge.SQL.Insert(target, databaseName, tableName );
+            }
+        }
+        StartCoroutine(request.Send());
     }
 }
 }
