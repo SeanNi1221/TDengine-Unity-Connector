@@ -264,7 +264,7 @@ public partial class TDBridge : MonoBehaviour
     static string Bracket(float f) {
         return Bracket(f.ToString(), true);
     }
-    static bool isValidForName(char c) {
+    public static bool isValidForName(char c) {
         return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || (c == '_');
     }
     static bool isTextData(int typeIndex) {
