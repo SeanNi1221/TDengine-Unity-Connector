@@ -1,2 +1,2 @@
 # unity-bridge-to-TDengine
-Easily connect Unity to TDengine for any target platform, works both in edtor and build apps.
+A Unity Editor and runtime solution for connection to TDengine.

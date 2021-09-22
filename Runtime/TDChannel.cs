@@ -106,7 +106,6 @@ public class TDChannel : MonoBehaviour
         request.sql = TDBridge.SQL.GetFirstRowWithoutTS(target, databaseName, tableName);
         yield return request.Send();
         Type targetType = target.GetType();
-        Debug.Log("Target Type: " + targetType.Name);
         TDBridge.FromTD(ref target, request.result);
     }
     public void Alter()

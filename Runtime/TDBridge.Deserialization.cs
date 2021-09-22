@@ -17,7 +17,6 @@ public partial class TDBridge
     }
     public static T FromTD<T>(ref T obj, Result result, int row = 0) {
         UnityEngine.Object _obj = obj as UnityEngine.Object;
-        Debug.Log("Type: " + typeof(T).Name);
         return (T)FromTD(ref _obj, result, typeof(T), row);
     }
     public static object FromTD(ref UnityEngine.Object obj, Result result, int row = 0) {
@@ -28,31 +27,18 @@ public partial class TDBridge
         //Ignore timestamp primary key.
         for (int i= 1;i < result.column_meta.Count; i++) {
             ColumnMeta col = result.column_meta[i];
-            FieldInfo field = type.GetField(col.name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            FieldInfo field = type.GetField(col.name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.IgnoreCase);
             Debug.Log("Got field: " + field.Name);
             field.SetValue( obj, deserializeValue(result.data[row].value[i], col.typeIndex) );
         }
         return obj;        
     }
-
-    //Only plain classes and structures are supported; classes derived from UnityEngine.Object (such as MonoBehaviour or ScriptableObject) are not.
-    // public static T FromTD<T>(Result result, int row = 0) {
-    //     T obj = default(T);
-    //     //Ignore timestamp primary key.
-    //     for (int i= 1;i < result.column_meta.Count; i++) {
-    //         ColumnMeta col = result.column_meta[i];
-    //         FieldInfo field = typeof(T).GetField(col.name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-    //         field.SetValue( obj, deserializeValue(result.data[row].value[i], col.typeIndex) );
-    //     }
-    //     return obj;
-    // }
-
     static Func<string, int, object> deserializeValue = (data, typeIndex) => {
         Type type = varType[typeIndex];        
         switch ( typeIndex)
         {
             default: return data;
-            case 1: return Boolean.Parse(data);
+            case 1: return data == "1" || data =="true";
             case 2: return Byte.Parse(data);
             case 3: return Int16.Parse(data);
             case 4: return Int32.Parse(data);
