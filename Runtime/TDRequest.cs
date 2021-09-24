@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
 using System;
-namespace Sean21
+namespace Sean21.BridgeToTDengine
 {
 [Serializable]
 public class TDRequest
@@ -12,9 +12,12 @@ public class TDRequest
     public UnityWebRequest web;
     public UnityWebRequestAsyncOperation operation;
     public TDBridge.Result result;
+    [TextArea(0,50)]
     public string json;
     [TextArea(0,50)]
     public string sql;
+    [HideInInspector]
+    public bool succeeded;
     public TDRequest(string sql)
     {
         this.sql = sql;
@@ -25,11 +28,16 @@ public class TDRequest
         this.sql = sql;
         this.timeEncoding = format;
     }
-
     public IEnumerator Send()
     {
+        yield return Send(sql);
+    }
+
+    public IEnumerator Send(string SQL)
+    {
+        sql = SQL;
         string uri = TDBridge.ChooseUri(timeEncoding);
-        using ( web = UnityWebRequest.Put(uri, sql) ){
+        using ( web = UnityWebRequest.Put(uri, SQL) ){
             Debug.Log("Connecting: " + web.uri);
             web.SetRequestHeader("Authorization", TDBridge.i.header);
             yield return operation = web.SendWebRequest();
@@ -39,12 +47,14 @@ public class TDRequest
             if (web.isNetworkError || web.isHttpError)
 #endif
             {
-                Debug.LogError("Failed sending Request: " + sql + " with error: " + web.error + TDBridge.requestHint(web.responseCode));
+                Debug.LogError("Failed sending Request: " + SQL + " with error: " + web.error + TDBridge.requestHint(web.responseCode));
+                succeeded = false;
                 yield break;
             }
-            Debug.Log("Successfully sent Request: \n" + sql);
+            Debug.Log("Successfully sent Request: \n" + SQL);
             this.json = web.downloadHandler.text;
             this.result = TDBridge.Parse(json);
+            succeeded = true;
             yield break;
         }
     }

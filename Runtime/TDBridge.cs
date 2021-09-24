@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
 using System;
-namespace Sean21
+namespace Sean21.BridgeToTDengine
 {
 [ExecuteInEditMode]
 public partial class TDBridge : MonoBehaviour
@@ -86,15 +86,9 @@ public partial class TDBridge : MonoBehaviour
         }
     }
 
-    public enum TimeEncoding { Normal, Unix, UTC }
-    static string TimeStamp16 {
-        get {return System.DateTime.Now.ToString("yyMMddHHmmssffff");}
-    }    
-    const string Dot = ".";
-    const string Space = " ";
-
-    public static readonly List<System.Type> varType = new List<System.Type>{ typeof(System.Object), typeof(System.Boolean), typeof(System.Byte), typeof(System.Int16), typeof(System.Int32), typeof(System.Int64), typeof(System.Single), typeof(System.Double), typeof(bin), typeof(System.DateTime),typeof(System.String) };
-    public static readonly List<string> dataType = new List<string>{ "unkown", "bool", "tinyint", "smallint", "int", "bigint", "float", "double", "binary", "timestamp", "nchar" };
+    public enum TimeEncoding { Normal, Unix, UTC }  
+    public static readonly List<System.Type> varType = new List<System.Type>{ typeof(System.Object), typeof(System.Boolean), typeof(System.Byte), typeof(System.Int16), typeof(System.Int32), typeof(System.Int64), typeof(System.Single), typeof(System.Double), typeof(bin), typeof(System.DateTime), typeof(System.String), typeof(Vector2), typeof(UnityEngine.Vector3), typeof(UnityEngine.Quaternion), typeof(UnityEngine.Transform)};
+    public static readonly List<string> dataType = new List<string>{ "nchar(100)", "bool", "tinyint", "smallint", "int", "bigint", "float", "double", "binary", "timestamp", "nchar", "nchar(32)", "nchar(48)", "nchar(64)", "nchar(156)" };
     void Awake()
     {
         Initialize();
@@ -234,41 +228,6 @@ public partial class TDBridge : MonoBehaviour
     }
     public static string ASCIIDecode(byte[] bArray) {
         return System.Text.Encoding.ASCII.GetString(bArray);
-    }
-    static string Quote(string s) {
-        if ( s.StartsWith("'") && s.EndsWith("'") ) {
-            return s;
-        }
-        else return "'" + s + "'";
-    }
-    static string Quote(int l) {
-        return Quote(l.ToString());
-    }
-    static string Quote(float f) {
-        return Quote(f.ToString());
-    }
-    static string Bracket(string s, bool force = false) {
-        if (force ) {
-            return "(" + s + ")";
-        }
-        else {
-            if ( s.StartsWith("(") && s.EndsWith(")") ) {
-                return s;
-            }
-            else return "(" + s + ")";
-        }
-    }
-    static string Bracket(int i) {
-        return Bracket(i.ToString(), true);
-    }
-    static string Bracket(float f) {
-        return Bracket(f.ToString(), true);
-    }
-    public static bool isValidForName(char c) {
-        return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || (c == '_');
-    }
-    static bool isTextData(int typeIndex) {
-        return (typeIndex == 8 || typeIndex == 10)? true:false;
     }
 }
 //For BINARY type in the database.

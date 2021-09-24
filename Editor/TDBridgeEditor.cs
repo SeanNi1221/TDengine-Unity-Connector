@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
-namespace Sean21
+namespace Sean21.BridgeToTDengine
 {
 [CustomEditor(typeof(TDBridge))]
 public class TDBridgeEditor : Editor

@@ -1,8 +1,9 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using Sean21;
+using Sean21.BridgeToTDengine;
 
+[ExecuteInEditMode]
 public class TH_Meter : MonoBehaviour
 {
     [DataTag]
@@ -17,6 +18,12 @@ public class TH_Meter : MonoBehaviour
     public float humidity;
     [DataField(40)]
     public string string_data = "This Is A String Field.";
+    [DataField]
+    public Transform placement;
+    void Reset()
+    {
+        placement = transform;
+    }
     void Start()
     {
 

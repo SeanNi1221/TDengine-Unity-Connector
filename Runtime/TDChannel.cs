@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System;
 using System.Reflection;
-namespace Sean21
+namespace Sean21.BridgeToTDengine
 {
 [ExecuteInEditMode]
 public class TDChannel : MonoBehaviour
@@ -52,13 +52,13 @@ public class TDChannel : MonoBehaviour
     }
     public void CreateDatabase()
     {
-        request.sql = TDBridge.SQL.CreateDatabase(databaseName);
+        request.sql = SQL.CreateDatabase(databaseName);
         StartCoroutine(request.Send());
     }
 
     public void CreateSuperTableForTarget()
     {
-        request.sql = TDBridge.SQL.CreateSTable(target, databaseName, superTableName);
+        request.sql = SQL.CreateSTable(target, databaseName, superTableName);
         StartCoroutine(request.Send());
     }
     public void DropSuperTableForTarget()
@@ -69,11 +69,11 @@ public class TDChannel : MonoBehaviour
     public void CreateTableForTarget()
     {
         if (usingSuperTable) {
-            request.sql = TDBridge.SQL.CreateTableUsing(target, databaseName, tableName, superTableName );
+            request.sql = SQL.CreateTableUsing(target, databaseName, tableName, superTableName );
             StartCoroutine(request.Send());
         }
         else {
-            request.sql = TDBridge.SQL.CreateTable(target, databaseName, tableName);
+            request.sql = SQL.CreateTable(target, databaseName, tableName);
             StartCoroutine(request.Send());
         }
     }
@@ -87,7 +87,7 @@ public class TDChannel : MonoBehaviour
         StartCoroutine(SetTagsCo());
     }
     public IEnumerator SetTagsCo() {
-        List<string> sqls = TDBridge.SQL.SetTags(target, databaseName, tableName);
+        List<string> sqls = SQL.SetTags(target, databaseName, tableName);
         foreach (string _sql in sqls) {
             request.sql = _sql;
             yield return request.Send();
@@ -103,9 +103,19 @@ public class TDChannel : MonoBehaviour
     }
     public IEnumerator PullCo()
     {
-        request.sql = TDBridge.SQL.GetFirstRowWithoutTS(target, databaseName, tableName);
-        yield return request.Send();
-        Type targetType = target.GetType();
+        //Fields
+        yield return request.Send(SQL.GetLastRow(target, "*", databaseName, tableName));
+        if (!request.succeeded) {
+            Debug.LogError("Pull fields failed!");
+            yield break;
+        }
+        TDBridge.FromTD(ref target, request.result);
+        //Tags
+        yield return request.Send(SQL.GetTags(target, databaseName, tableName));
+        if (!request.succeeded) {
+            Debug.LogError("Pull tags failed!");
+            yield break;
+        }
         TDBridge.FromTD(ref target, request.result);
     }
     public void Alter()
@@ -116,18 +126,18 @@ public class TDChannel : MonoBehaviour
     {
         if (autoCreate) {
             if (insertSpecific) {
-                request.sql = TDBridge.SQL.InsertSpecificUsing(target, databaseName, superTableName, tableName );
+                request.sql = SQL.InsertSpecificUsing(target, databaseName, superTableName, tableName );
             }
             else {
-                request.sql = TDBridge.SQL.InsertUsing(target, databaseName, superTableName, tableName );
+                request.sql = SQL.InsertUsing(target, databaseName, superTableName, tableName );
             }
         }
         else {
             if (insertSpecific) {
-                request.sql = TDBridge.SQL.InsertSpecific(target, databaseName, tableName );
+                request.sql = SQL.InsertSpecific(target, databaseName, tableName );
             }
             else {
-                request.sql = TDBridge.SQL.Insert(target, databaseName, tableName );
+                request.sql = SQL.Insert(target, databaseName, tableName );
             }
         }
         StartCoroutine(request.Send());
