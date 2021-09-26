@@ -20,11 +20,13 @@ public static class SQL
         return action + columnNames + " FROM " + db_name + Dot + tb_name + option; 
     }
     // SELECT LAST_ROW(columnNames) FROM test.TH_Meter0001
-    public static string GetLastRow(UnityEngine.Object obj, string columnNames = "*", string db_name = null, string tb_name = null) {
+    public static string GetLastRow(UnityEngine.Object obj, string columnNames = "*", bool withTags = false, string db_name = null, string tb_name = null) {
         string action = "SELECT LAST_ROW";
         db_name = SetDatabaseName(db_name);
         tb_name = SetTableNameWith(obj, tb_name);
-        return action + Bracket(columnNames) + " FROM " + db_name + Dot + tb_name; 
+        return withTags?
+            action + Bracket(columnNames) + "," + TagNames(obj, false) + " FROM " + db_name + Dot + tb_name :            
+            action + Bracket(columnNames) + " FROM " + db_name + Dot + tb_name; 
     }
     // SELECT tag1_name, tag2_name FROM test.TH_Meter0001
     public static string GetTags(UnityEngine.Object obj, string db_name = null, string tb_name = null) {

@@ -94,14 +94,14 @@ public partial class TDBridge
     //fields
         TDRequest request = new TDRequest("SELECT FIRST(*) FROM " + db_name + Dot + stb_name);
         yield return request.Send();
-        List<ColumnMeta> currentMeta = request.result.column_meta;
-        List<ColumnMeta> newMeta = FieldMetasOf(_type);
+        List<TDResult.ColumnMeta> currentMeta = request.result.column_meta;
+        List<TDResult.ColumnMeta> newMeta = FieldMetasOf(_type);
     //tags
         request.sql = "SELECT * FROM " + db_name + Dot + stb_name + " LIMIT 1";
         yield return request.Send();
         request.result.column_meta.RemoveRange(0, currentMeta.Count);
-        List<ColumnMeta> currentTagsMeta = request.result.column_meta;
-        List<ColumnMeta> newTagsMeta = TagMetasOf(_type);
+        List<TDResult.ColumnMeta> currentTagsMeta = request.result.column_meta;
+        List<TDResult.ColumnMeta> newTagsMeta = TagMetasOf(_type);
 //Take action for fields
         yield return AlterColumns(currentMeta, newMeta,db_name, stb_name, action);
         Debug.Log("Altering ---FIELDS--- of " + stb_name + " finished.");
@@ -123,13 +123,13 @@ public partial class TDBridge
 //Aqcuire table structure
         TDRequest request = new TDRequest("SELECT FIRST(*) FROM " + db_name + Dot + tb_name);
         yield return request.Send();
-        List<ColumnMeta> currentMeta = request.result.column_meta;
-        List<ColumnMeta> newMeta = FieldMetasOf(_type);
+        List<TDResult.ColumnMeta> currentMeta = request.result.column_meta;
+        List<TDResult.ColumnMeta> newMeta = FieldMetasOf(_type);
 //Take action
         yield return AlterColumns(currentMeta, newMeta,db_name, tb_name, action);
         Debug.Log("Altering table " + tb_name + " finished.");
     }
-    static IEnumerator AlterColumns(List<ColumnMeta> currentMeta, List<ColumnMeta> newMeta, string db_name, string tb_name, string action, bool forTags = false) {
+    static IEnumerator AlterColumns(List<TDResult.ColumnMeta> currentMeta, List<TDResult.ColumnMeta> newMeta, string db_name, string tb_name, string action, bool forTags = false) {
 //Prepare SQL snippets
         string add = " ADD COLUMN ";
         string drop = " DROP COLUMN ";
@@ -142,15 +142,15 @@ public partial class TDBridge
         List<Coroutine> resizing = new List<Coroutine>();
         List<Coroutine> dropping = new List<Coroutine>();
         List<Coroutine> adding = new List<Coroutine>();
-        List<ColumnMeta> resized = new List<ColumnMeta>();
-        List<ColumnMeta> dropped = new List<ColumnMeta>();
-        List<ColumnMeta> added = new List<ColumnMeta>();    
+        List<TDResult.ColumnMeta> resized = new List<TDResult.ColumnMeta>();
+        List<TDResult.ColumnMeta> dropped = new List<TDResult.ColumnMeta>();
+        List<TDResult.ColumnMeta> added = new List<TDResult.ColumnMeta>();    
 //Dorp deprecated and resize those with length changed.
-        foreach(ColumnMeta col in currentMeta) {
+        foreach(TDResult.ColumnMeta col in currentMeta) {
             bool shouldDrop = true;
     //ignore the primary key (timestamp) column.
             if(currentMeta.IndexOf(col) > 0) {
-                foreach(ColumnMeta newCol in newMeta) {
+                foreach(TDResult.ColumnMeta newCol in newMeta) {
                     if (col.name.Equals(newCol.name.ToLower()) && col.typeIndex == newCol.typeIndex) {
                         shouldDrop = false;
                         int type = col.typeIndex;
@@ -180,14 +180,14 @@ public partial class TDBridge
                 Debug.LogWarning("Culomn " + col.name + " has been dropped, with all the data inside lost!");
             }
         }
-        foreach (ColumnMeta col in dropped ) { yield return currentMeta.Remove(col);}
+        foreach (TDResult.ColumnMeta col in dropped ) { yield return currentMeta.Remove(col);}
 //Waite for resizing and dropping finished.
         foreach (Coroutine c in resizing) { yield return c; }
         foreach (Coroutine c in dropping) { yield return c; }
 //Add new columns from the class.
-        foreach(ColumnMeta newCol in newMeta) {
+        foreach(TDResult.ColumnMeta newCol in newMeta) {
             bool shouldAdd = true;
-            foreach(ColumnMeta col in currentMeta) {
+            foreach(TDResult.ColumnMeta col in currentMeta) {
                 if (col.name.Equals(newCol.name.ToLower())) {
                     shouldAdd = false;
                     break;
@@ -207,8 +207,8 @@ public partial class TDBridge
         foreach (Coroutine c in adding) { yield return c; }
 //Conclude
         Debug.Log(dropping.Count + " columns dropped, " + resizing.Count + " columns resized, " + adding.Count + " columns added.");
-        foreach (ColumnMeta col_dropped in dropped) {
-            foreach (ColumnMeta col_added in added) {
+        foreach (TDResult.ColumnMeta col_dropped in dropped) {
+            foreach (TDResult.ColumnMeta col_added in added) {
                 if (col_added.name == col_dropped.name) {
                     Debug.LogWarning("Some column(s) were added after dropped. That changed the sequence of the columns. The Insert(Object) method no longer works now!" +
                     "\n Solution A: Change the class' fields order according to the table in the database." + 
@@ -217,35 +217,35 @@ public partial class TDBridge
             }
         }
     }
-    public static List<ColumnMeta> FieldMetasOf<T>() {
+    public static List<TDResult.ColumnMeta> FieldMetasOf<T>() {
         return FieldMetasOf( typeof(T) );
     }
-    public static List<ColumnMeta> FieldMetasOf(UnityEngine.Object obj) {
+    public static List<TDResult.ColumnMeta> FieldMetasOf(UnityEngine.Object obj) {
         return FieldMetasOf( obj.GetType() );
     }
-    public static List<ColumnMeta> FieldMetasOf(System.Type type) {
-        List<ColumnMeta> list = new List<ColumnMeta>();
+    public static List<TDResult.ColumnMeta> FieldMetasOf(System.Type type) {
+        List<TDResult.ColumnMeta> list = new List<TDResult.ColumnMeta>();
         foreach (var field in type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)) {            
             DataField data = Attribute.GetCustomAttribute(field, typeof(DataField)) as DataField;
             if ( data != null) {
-                ColumnMeta current = new ColumnMeta(field.Name, varType.IndexOf(field.FieldType), data.length);
+                TDResult.ColumnMeta current = new TDResult.ColumnMeta(field.Name, varType.IndexOf(field.FieldType), data.length);
                 list.Add(current);
             }
         }
         return list;
     }
-    public static List<ColumnMeta> TagMetasOf<T>() {
+    public static List<TDResult.ColumnMeta> TagMetasOf<T>() {
         return TagMetasOf( typeof(T) );
     }
-    public static List<ColumnMeta> TagMetasOf(UnityEngine.Object obj) {
+    public static List<TDResult.ColumnMeta> TagMetasOf(UnityEngine.Object obj) {
         return TagMetasOf( obj.GetType() );
     }
-    public static List<ColumnMeta> TagMetasOf( System.Type type) {
-        List<ColumnMeta> list = new List<ColumnMeta>();
+    public static List<TDResult.ColumnMeta> TagMetasOf( System.Type type) {
+        List<TDResult.ColumnMeta> list = new List<TDResult.ColumnMeta>();
         foreach (var field in type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)) {            
             DataTag data = Attribute.GetCustomAttribute(field, typeof(DataTag)) as DataTag;
             if ( data != null) {
-                ColumnMeta current = new ColumnMeta(field.Name, varType.IndexOf(field.FieldType), data.length);
+                TDResult.ColumnMeta current = new TDResult.ColumnMeta(field.Name, varType.IndexOf(field.FieldType), data.length);
                 list.Add(current);
             }
         }

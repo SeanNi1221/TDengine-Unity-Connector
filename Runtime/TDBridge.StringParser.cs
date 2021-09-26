@@ -6,9 +6,9 @@ namespace Sean21.TDengineConnector
 {
 public partial class TDBridge
 {
-    public static Result Parse(string json)
+    public static TDResult Parse(string json)
     {
-        Result r = new Result();
+        TDResult r = new TDResult();
         string remaining = json;
         
         //Extract status
@@ -24,7 +24,7 @@ public partial class TDBridge
         {
             string meta = Process(ref metas, "[", "]");
             string[] info = meta.Split(',');
-            r.column_meta.Add(new ColumnMeta
+            r.column_meta.Add(new TDResult.ColumnMeta
             (
                 info[0].Replace("\"", ""), int.Parse(info[1]), int.Parse(info[2])
             ));
@@ -34,7 +34,7 @@ public partial class TDBridge
         {
             string rowString = Process(ref datas, "[", "]");
             // List<string> value = new List<string>();
-            Row currentRow = new Row(new List<string>());
+            TDResult.Row currentRow = new TDResult.Row(new List<string>());
             for (int j=0; j < r.column_meta.Count; j++) {
                 Func<string> currentValue = () => {
                     switch (r.column_meta[j].typeIndex)
@@ -52,9 +52,9 @@ public partial class TDBridge
         }
         return r;
     }
-    public static LoginResult ParseLogin(string json)
+    public static TDResult.LoginResult ParseLogin(string json)
     {
-        LoginResult r = new LoginResult();
+        TDResult.LoginResult r = new TDResult.LoginResult();
         string remaining = json;
         //Parse status
         r.status = Process(ref remaining, ":\"", "\",");

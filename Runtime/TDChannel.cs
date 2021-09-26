@@ -103,17 +103,9 @@ public class TDChannel : MonoBehaviour
     }
     public IEnumerator PullCo()
     {
-        //Fields
-        yield return request.Send(SQL.GetLastRow(target, "*", databaseName, tableName));
+        yield return request.Send(SQL.GetLastRow(target, "*", true, databaseName, tableName));
         if (!request.succeeded) {
             Debug.LogError("Pull fields failed!");
-            yield break;
-        }
-        TDBridge.FromTD(ref target, request.result);
-        //Tags
-        yield return request.Send(SQL.GetTags(target, databaseName, tableName));
-        if (!request.succeeded) {
-            Debug.LogError("Pull tags failed!");
             yield break;
         }
         TDBridge.FromTD(ref target, request.result);

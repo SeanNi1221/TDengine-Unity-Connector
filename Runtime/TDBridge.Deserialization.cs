@@ -7,31 +7,31 @@ namespace Sean21.TDengineConnector
 {
 public partial class TDBridge
 {   
-    public static T FromTD<T>(Result result, int row = 0) {
+    public static T FromTD<T>(TDResult result, int row = 0) {
         return (T)FromTD(result, typeof(T), row);
     }
 
-    public static object FromTD(Result result, Type type, int row = 0) {
+    public static object FromTD(TDResult result, Type type, int row = 0) {
         UnityEngine.Object obj = (UnityEngine.Object)Activator.CreateInstance(type);
         return FromTD(ref obj, result, type, row);
     }
-    public static T FromTD<T>(ref T obj, Result result, int row = 0) {
+    public static T FromTD<T>(ref T obj, TDResult result, int row = 0) {
         UnityEngine.Object _obj = obj as UnityEngine.Object;
         return (T)FromTD(ref _obj, result, typeof(T), row);
     }
-    public static object FromTD(ref UnityEngine.Object obj, Result result, int row = 0) {
+    public static object FromTD(ref UnityEngine.Object obj, TDResult result, int row = 0) {
         return FromTD(ref obj, result, obj.GetType(), row);
     }
-    private static object FromTD(ref UnityEngine.Object obj, Result result, Type type, int row = 0) {
+    private static object FromTD(ref UnityEngine.Object obj, TDResult result, Type type, int row = 0) {
         Debug.Log("Deserializing type: " + type.Name);
         for (int i= 0;i < result.column_meta.Count; i++) {
-            ColumnMeta col = result.column_meta[i];
+            TDResult.ColumnMeta col = result.column_meta[i];
             if (col.typeIndex == 9) {
                 Debug.Log("TIMESTAMP:" + result.data[row].value[i]);
             }
             FieldInfo field = type.GetField(col.name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.IgnoreCase);
             if (field == null) {
-                Debug.Log(SQL.Quote(col.name) + " doesn't exists in target object.");
+                Debug.Log(SQL.Quote(col.name) + " doesn't exist in target object.");
                 continue;
             }
             Debug.Log("Got " + SQL.Quote(field.Name));

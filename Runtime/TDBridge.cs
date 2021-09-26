@@ -36,7 +36,7 @@ public partial class TDBridge : MonoBehaviour
     public string jsonText;
     [Tooltip("Partial parsed result from the Json Text. Use your custom class/method to parse the 'data' section of the json. Checkout the Documentation for more information." + "\n" +
         "Do not modify this field because it's pointless.")]
-    public Result result;
+    public TDResult result;
     [Header("Terminal")]
     [TextArea(0,50)]
     [Tooltip("Insert your SQL statement to be executed.")]
@@ -50,42 +50,6 @@ public partial class TDBridge : MonoBehaviour
     private string uriSQL;
     private string uriUnix;
     private string uriUTC;
-    [Serializable]
-    public class Result {
-        public string status;
-        public List<ColumnMeta> column_meta = new List<ColumnMeta>();
-        public List<Row> data = new List<Row>();
-        public int rows;
-    }
-    public class LoginResult {
-        public string status;
-        public int code;
-        public string desc;
-    }
-    [Serializable]
-    public struct ColumnMeta {
-        public string name;
-        public int typeIndex;
-        public int length;
-        public bool isResizable{
-            get;
-            private set;
-        }
-        public ColumnMeta( string a, int t, int l) {
-            this.name = a;
-            this.typeIndex = t;
-            this.length = l;
-            this.isResizable = (t == dataType.IndexOf("nchar") || t == dataType.IndexOf("binary"));
-        }
-    }
-    [Serializable]
-    public struct Row {
-        public List<string> value; 
-        public Row(List<string> _value = null) {
-            this.value = _value;
-        }
-    }
-
     public enum TimeEncoding { Normal, Unix, UTC }  
     public static readonly List<System.Type> varType = new List<System.Type>{ typeof(System.Object), typeof(System.Boolean), typeof(System.Byte), typeof(System.Int16), typeof(System.Int32), typeof(System.Int64), typeof(System.Single), typeof(System.Double), typeof(bin), typeof(System.DateTime), typeof(System.String), typeof(Vector2), typeof(UnityEngine.Vector3), typeof(UnityEngine.Quaternion), typeof(UnityEngine.Transform)};
     public static readonly List<string> dataType = new List<string>{ "nchar(100)", "bool", "tinyint", "smallint", "int", "bigint", "float", "double", "binary", "timestamp", "nchar", "nchar(32)", "nchar(48)", "nchar(64)", "nchar(156)" };

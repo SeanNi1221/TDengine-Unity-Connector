@@ -11,7 +11,7 @@ public class TDRequest
     public TDBridge.TimeEncoding timeEncoding;
     public UnityWebRequest web;
     public UnityWebRequestAsyncOperation operation;
-    public TDBridge.Result result;
+    public TDResult result;
     [TextArea(0,50)]
     public string json;
     [TextArea(0,50)]
@@ -27,6 +27,13 @@ public class TDRequest
     {
         this.sql = sql;
         this.timeEncoding = format;
+    }
+    public void Clear()
+    {
+        result.Clear();
+        json = null;
+        sql = null;
+        succeeded = false;
     }
     public IEnumerator Send()
     {
@@ -52,8 +59,8 @@ public class TDRequest
                 yield break;
             }
             Debug.Log("Successfully sent Request: \n" + SQL);
-            this.json = web.downloadHandler.text;
-            this.result = TDBridge.Parse(json);
+            json = web.downloadHandler.text;
+            result = TDBridge.Parse(json);
             succeeded = true;
             yield break;
         }
