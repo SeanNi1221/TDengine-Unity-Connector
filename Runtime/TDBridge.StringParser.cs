@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System;
-namespace Sean21.BridgeToTDengine
+namespace Sean21.TDengineConnector
 {
 public partial class TDBridge
 {

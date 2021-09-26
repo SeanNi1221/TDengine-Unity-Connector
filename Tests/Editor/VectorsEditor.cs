@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
-using Sean21;
+using Sean21.TDengineConnector;
 [CustomEditor(typeof(Vectors))]
 public class VectorsEditor : Editor
 {

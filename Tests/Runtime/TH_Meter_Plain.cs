@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using Sean21.BridgeToTDengine;
+using Sean21.TDengineConnector;
 
 public class TH_Meter_Plain
 {

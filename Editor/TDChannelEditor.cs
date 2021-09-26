@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
-namespace Sean21.BridgeToTDengine
+namespace Sean21.TDengineConnector
 {
 [CustomEditor(typeof(TDChannel))]
 [CanEditMultipleObjects]

@@ -4,7 +4,7 @@ using UnityEngine;
 using System;
 using System.Reflection;
 
-namespace Sean21.BridgeToTDengine
+namespace Sean21.TDengineConnector
 {
 public static class SQL
 {

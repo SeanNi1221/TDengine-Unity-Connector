@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
 using System;
-namespace Sean21.BridgeToTDengine
+namespace Sean21.TDengineConnector
 {
 [Serializable]
 public class TDRequest

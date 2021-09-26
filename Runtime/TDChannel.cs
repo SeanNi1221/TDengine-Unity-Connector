@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System;
 using System.Reflection;
-namespace Sean21.BridgeToTDengine
+namespace Sean21.TDengineConnector
 {
 [ExecuteInEditMode]
 public class TDChannel : MonoBehaviour

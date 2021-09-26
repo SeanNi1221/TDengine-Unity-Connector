@@ -1,7 +1,7 @@
 {
-    "name": "Sean.Bridge.TDBridge.Tests",
+    "name": "Sean21.TDengineConnector.Tests",
     "references": [
-        "Sean.Bridge.TDBridge"
+        "Sean21.TDengineConnector"
     ],
     "optionalUnityReferences": [
         "TestAssemblies"

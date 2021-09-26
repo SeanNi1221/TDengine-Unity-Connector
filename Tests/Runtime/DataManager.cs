@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using Sean21.BridgeToTDengine;
+using Sean21.TDengineConnector;
 [ExecuteInEditMode]
 public class DataManager : MonoBehaviour
 {

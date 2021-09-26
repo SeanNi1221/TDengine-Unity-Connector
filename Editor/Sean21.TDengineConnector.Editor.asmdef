@@ -1,7 +1,7 @@
 ﻿{
-	"name": "Sean.Bridge.TDBridge.Editor",
+	"name": "Sean21.TDengineConnector.Editor",
 	"references": [
-		"Sean.Bridge.TDBridge"
+		"Sean21.TDengineConnector"
 		],
 	"includePlatforms": [
 		"Editor"

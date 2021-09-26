@@ -1,10 +1,10 @@
 {
-    "name": "Sean.Bridge.TDBridge.Editor.Tests",
+    "name": "Sean21.TDengineConnector.Editor.Tests",
     "references": [
-        "Sean.Bridge.TDBridge.Tests",
+        "Sean21.TDengineConnector.Tests",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner",
-        "Sean.Bridge.TDBridge"
+        "Sean21.TDengineConnector"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
