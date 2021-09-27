@@ -34,9 +34,11 @@ public partial class TDBridge : MonoBehaviour
     [Tooltip("The responded json from your TDengine server." + "\n" +
         "Do not modify this field because it's pointless.")]
     public string jsonText;
+    public static string JsonText {get{return TDBridge.i.jsonText;}}
     [Tooltip("Partial parsed result from the Json Text. Use your custom class/method to parse the 'data' section of the json. Checkout the Documentation for more information." + "\n" +
         "Do not modify this field because it's pointless.")]
     public TDResult result;
+    public static TDResult Result {get{return TDBridge.i.result;}}
     [Header("Terminal")]
     [TextArea(0,50)]
     [Tooltip("Insert your SQL statement to be executed.")]

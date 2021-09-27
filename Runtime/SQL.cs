@@ -53,7 +53,7 @@ public static class SQL
         string fieldTypes = FieldTypes(type, timestamp_field_name);
         string tagTypes = TagTypes(type);
         string sql = action + Quote(db_name) + Dot + Quote(stb_name) + fieldTypes + tagTypes;
-        Debug.Log("SQL- CREATE STABLE from type " + type.Name + ":" + "\n" + sql);
+        Debug.Log("SQL- CREATE STABLE from type " + type.Name);
         return sql;
     }
     public static string CreateTable<T>(string db_name = null, string tb_name = null, string timestamp_field_name = "ts", bool if_not_exists = true) {

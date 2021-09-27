@@ -6,6 +6,7 @@ using Sean21.TDengineConnector;
 public class Vectors : MonoBehaviour
 {
     public string parseTest = "(4567.98345)";
+    public string stringlengthTest;
     public float floatData = 12.123456789f;
     public Vector2 v2Data = new Vector2(float.MinValue, float.MinValue);
     // public Vector3 v3Data = new Vector3( Mathf.PI, -Mathf.PI*2, Mathf.PI*3);
@@ -39,6 +40,7 @@ public class Vectors : MonoBehaviour
         string mods = SQL.SerializeTransform(modifier);
 
         print("parsed float:" + parsedFloat);
+        print("length:" + stringlengthTest.Length);
         print("float string: " + fs + " Length: " + fs.Length + " TypeIndex: " + TDBridge.varType.IndexOf(floatData.GetType()) );
         print("Parsed float: " + parsedFs);
 

@@ -16,7 +16,7 @@ public class TH_Meter : MonoBehaviour
     public float temperature;
     [DataField]
     public float humidity;
-    [DataField(40)]
+    [DataField(200)]
     public string string_data = "This Is A String Field.";
     [DataField]
     public Transform placement;
