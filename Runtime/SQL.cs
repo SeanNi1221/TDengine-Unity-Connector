@@ -414,6 +414,7 @@ public static class SQL
     };
     public static string SerializeTransform(Transform tr)
     {
+        if (!tr) return string.Empty;
         return tr.localPosition.ToString("") + "," + tr.localEulerAngles.ToString("") + "," + tr.localScale.ToString("");
     }
 //Too expensive to excecute. Deprecated.
