@@ -503,10 +503,10 @@ public static class SQL
     public static bool isTextData(int typeIndex) {
         return (typeIndex == 8 || typeIndex == 10)? true:false;
     }
-    static string TimeStamp16 {
+    public static string TimeStamp16 {
         get {return System.DateTime.Now.ToString("yyMMddHHmmssffff");}
     }
-    static bool isValidForName(char c) {
+    public static bool isValidForName(char c) {
         return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || (c == '_');
     }  
 }
