@@ -16,9 +16,9 @@ public partial class TDBridge
         //Extract column meta
         string metas = Process(ref remaining, "[[", "]]", 1);
         //Extract data        
-        string datas = Process(ref remaining, "[[", "]]", 1);
+        string datas = string.IsNullOrEmpty(metas)? null : Process(ref remaining, "[[", "]]", 1);
         //Extract rows
-        r.rows = int.Parse( Process(ref remaining, ":", "}") );
+        r.rows = string.IsNullOrEmpty(datas)? 0 : int.Parse( Process(ref remaining, ":", "}") );
         //Split column meta
         while (metas.Length > 0)
         {
