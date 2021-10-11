@@ -395,6 +395,9 @@ public static class SQL
         switch (typeIndex)
         {
             default: return fieldValue.ToString();
+            case 5: return ((System.Int64)fieldValue).ToString("R");
+            case 6: return ((float)fieldValue).ToString("G9");
+            case 7: return ((System.Double)fieldValue).ToString("G17");
             case 9: 
                 var dateTime = (System.DateTime)fieldValue;
                 return Quote( dateTime.ToString("yyyy-MM-dd HH:mm:ss.fff") );
@@ -403,11 +406,11 @@ public static class SQL
                 if( textValue.Length > textLength) { Debug.LogWarning("Value overlength: " + textValue + ". operation can fail!"); }
                 return Quote(textValue);
             case 11:
-                return ((Vector2)fieldValue).ToString("");
+                return ((Vector2)fieldValue).ToString("G9");
             case 12:
-                return ((Vector3)fieldValue).ToString("");
+                return ((Vector3)fieldValue).ToString("G9");
             case 13:
-                return ((Quaternion)fieldValue).ToString("");
+                return ((Quaternion)fieldValue).ToString("G9");
             case 14:
                 return Quote(SerializeTransform(fieldValue as Transform));
         }
@@ -415,7 +418,7 @@ public static class SQL
     public static string SerializeTransform(Transform tr)
     {
         if (!tr) return string.Empty;
-        return tr.localPosition.ToString("") + "," + tr.localEulerAngles.ToString("") + "," + tr.localScale.ToString("");
+        return tr.localPosition.ToString("G9") + "," + tr.localEulerAngles.ToString("G9") + "," + tr.localScale.ToString("G9");
     }
 //Too expensive to excecute. Deprecated.
     static Func< List<int>, List<string>, List<string> > resortValues = (index, source) => {

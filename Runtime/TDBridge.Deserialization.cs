@@ -54,29 +54,12 @@ public partial class TDBridge
             case 7: return Double.Parse(data);
             case 8: return new bin(data);
             case 9: return DateTime.Parse(data);
+            case 10: return data;
             case 11: return string.IsNullOrEmpty(data)||data=="null"? Vector2.zero : ParseVector2(data);
             case 12: return string.IsNullOrEmpty(data)||data=="null"? Vector3.zero : ParseVector3(data);
             case 13: return string.IsNullOrEmpty(data)||data=="null"? Quaternion.identity : ParseQuaternion(data);
             case 14: return string.IsNullOrEmpty(data)||data=="null"? fieldValue as Transform : ParseTransform(data, fieldValue as Transform);
         }
     };
-    // static Func<string, int, object> deserializeValue = (data, typeIndex) => {
-    //     switch ( typeIndex)
-    //     {
-    //         default: return data;
-    //         case 1: return data == "1" || data =="true";
-    //         case 2: return Byte.Parse(data);
-    //         case 3: return Int16.Parse(data);
-    //         case 4: return Int32.Parse(data);
-    //         case 5: return Int64.Parse(data);
-    //         case 6: return Single.Parse(data);
-    //         case 7: return Double.Parse(data);
-    //         case 8: return new bin(data);
-    //         case 9: return DateTime.Parse(data);
-
-    //     }
-    // };
-
-
 }
 }
