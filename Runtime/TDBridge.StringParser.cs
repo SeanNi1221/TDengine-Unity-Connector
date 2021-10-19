@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿//Node: This is not a generic json parser, it's designed for TDengine only.
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System;

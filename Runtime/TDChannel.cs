@@ -105,7 +105,7 @@ public class TDChannel : MonoBehaviour
     {
         yield return request.Send(SQL.GetLastRow(target, "*", true, databaseName, tableName));
         if (!request.succeeded) {
-            Debug.LogError("Pull fields failed!");
+            Debug.LogError("Failed Pulling fields! Please enable 'Detailed Debug Log' for detailes.");
             yield break;
         }
         TDBridge.FromTD(ref target, request.result);

@@ -29,6 +29,7 @@ public partial class TDBridge : MonoBehaviour
     public int defaultTextLength = 10;
     [Tooltip("Database name if not declared")]
     public string defaultDatabaseName = "test";
+    public bool detailedDebugLog = false;
     [Header("Response")]
     [TextArea(0,50)]
     [Tooltip("The responded json from your TDengine server." + "\n" +

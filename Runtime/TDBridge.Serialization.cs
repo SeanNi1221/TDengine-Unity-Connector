@@ -104,10 +104,10 @@ public partial class TDBridge
         List<TDResult.ColumnMeta> newTagsMeta = TagMetasOf(_type);
 //Take action for fields
         yield return AlterColumns(currentMeta, newMeta,db_name, stb_name, action);
-        Debug.Log("Altering ---FIELDS--- of " + stb_name + " finished.");
+        if(TDBridge.i.detailedDebugLog) Debug.Log("Altering ---FIELDS--- of " + stb_name + " finished.");
 //Take action for tags
         yield return AlterColumns(currentTagsMeta, newTagsMeta,db_name, stb_name, action, true);
-        Debug.Log("Altering ---TAGS--- of " + stb_name + " finished.");
+        if(TDBridge.i.detailedDebugLog) Debug.Log("Altering ---TAGS--- of " + stb_name + " finished.");
     }
     public static IEnumerator AlterTableOf<T>(string db_name = null, string tb_name = null) {
         tb_name = SQL.SetTableNameWith<T>(tb_name);

@@ -53,7 +53,7 @@ public static class SQL
         string fieldTypes = FieldTypes(type, timestamp_field_name);
         string tagTypes = TagTypes(type);
         string sql = action + Quote(db_name) + Dot + Quote(stb_name) + fieldTypes + tagTypes;
-        Debug.Log("SQL- CREATE STABLE from type " + type.Name);
+        if(TDBridge.i.detailedDebugLog) Debug.Log("SQL- CREATE STABLE from type " + type.Name);
         return sql;
     }
     public static string CreateTable<T>(string db_name = null, string tb_name = null, string timestamp_field_name = "ts", bool if_not_exists = true) {
@@ -62,7 +62,7 @@ public static class SQL
         tb_name = SetTableNameWith<T>(tb_name);
         string fieldTypes = FieldTypes<T>(timestamp_field_name);
         string sql = action + Quote(db_name) + Dot + Quote(tb_name) + fieldTypes;
-        Debug.Log("SQL- CREATE TABLE from type " + typeof(T).Name + ":" + "\n" + sql);
+        if(TDBridge.i.detailedDebugLog) Debug.Log("SQL- CREATE TABLE from type " + typeof(T).Name);
         return sql;
     }
     public static string CreateTable(UnityEngine.Object obj, string db_name = null, string tb_name = null, string timestamp_field_name = "ts", bool if_not_exists = true) {
@@ -71,7 +71,7 @@ public static class SQL
         tb_name = SetTableNameWith(obj, tb_name);
         string fieldTypes = FieldTypes(obj, timestamp_field_name);
         string sql = action + Quote(db_name) + Dot + Quote(tb_name) + fieldTypes;
-        Debug.Log("SQL- CREATE TABLE from object " + obj.name + ":" + "\n" + sql);
+        if(TDBridge.i.detailedDebugLog) Debug.Log("SQL- CREATE TABLE from object " + obj.name);
         return sql;
     }
     public static string CreateTableUsing(UnityEngine.Object obj, string db_name = null, string tb_name = null, string stb_name = null, bool if_not_exists = true) {
@@ -81,7 +81,7 @@ public static class SQL
         stb_name = SetSTableNameWith(obj, stb_name);
         string tagValues = TagValues(obj);
         string sql = action + Quote(db_name) + Dot + Quote(tb_name) + " USING " + Quote(db_name) + Dot + Quote(stb_name) + tagValues;
-        Debug.Log("SQL- CREATE TABLE from object " + obj.name + " using " + stb_name + ":" + "\n" + sql);
+        if(TDBridge.i.detailedDebugLog) Debug.Log("SQL- CREATE TABLE from object " + obj.name + " using " + stb_name);
         return sql;            
     }
     public static string CreateTableUsing(UnityEngine.Object[] objects, string db_name = null, string[] tb_names = null, string stb_name = null, bool if_not_exists = true) {
@@ -100,7 +100,7 @@ public static class SQL
             tables += currentTable;
         }
         string sql = "CREATE TABLE " + tables;
-        Debug.Log("SQL- CREATE TABLE from " + objects.Length + " objects using"  + stb_name + ":" + "\n" + sql );
+        if(TDBridge.i.detailedDebugLog) Debug.Log("SQL- CREATE TABLE from " + objects.Length + " objects using"  + stb_name);
         return sql;
     }
 //INSERT INTO d1001 VALUES (NOW, 10.2, 219, 0.32)

@@ -27,14 +27,14 @@ public partial class TDBridge
         for (int i= 0;i < result.column_meta.Count; i++) {
             TDResult.ColumnMeta col = result.column_meta[i];
             if (col.typeIndex == 9) {
-                Debug.Log("TIMESTAMP:" + result.data[row].value[i]);
+                if(TDBridge.i.detailedDebugLog) Debug.Log("TIMESTAMP:" + result.data[row].value[i]);
             }
             FieldInfo field = type.GetField(col.name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.IgnoreCase);
             if (field == null) {
-                Debug.Log(SQL.Quote(col.name) + " doesn't exist in target object.");
+                if(TDBridge.i.detailedDebugLog) Debug.Log(SQL.Quote(col.name) + " doesn't exist in target object.");
                 continue;
             }
-            Debug.Log("Got " + SQL.Quote(field.Name));
+            if(TDBridge.i.detailedDebugLog) Debug.Log("Got " + SQL.Quote(field.Name));
             object fieldValue = field.GetValue(obj);
             field.SetValue( obj, deserializeValue(result.data[row].value[i], fieldValue));
         }
