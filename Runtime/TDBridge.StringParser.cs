@@ -58,11 +58,11 @@ public partial class TDBridge
         TDResult.LoginResult r = new TDResult.LoginResult();
         string remaining = json;
         //Parse status
-        r.status = Process(ref remaining, ":\"", "\",");
+        r.status = Process(ref remaining, ":\"", "\"");
         //Parse code
-        r.code = int.Parse( Process(ref remaining, ":\"", "\",") );
+        r.code = int.Parse( Process(ref remaining, ":", ",") );
         //parse desc
-        r.desc = Process(ref remaining, ":", "}");
+        r.desc = Process(ref remaining, ":\"", "\"");
         return r;
     }
     //string: (-3.402823E+38, -3.402823E+38, -3.402823E+38),(-3.402823E+38, -3.402823E+38, -3.402823E+38),(-3.402823E+38, -3.402823E+38, -3.402823E+38)

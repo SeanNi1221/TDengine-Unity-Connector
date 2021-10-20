@@ -72,12 +72,6 @@ public partial class TDBridge : MonoBehaviour
         using ( UnityWebRequest request = UnityWebRequest.Get(uriLogin) ){
             Debug.Log("Logging in... " + request.uri);
             yield return request.SendWebRequest();
-            string json = request.downloadHandler.text;
-            token = ParseLogin(json).desc;
-#if UNITY_EDITOR            
-            Debug.Log ("Method:" + authorizationMethod + ", token:" + token + ", IP:" + ip);
-#endif
-            header = "Taosd " + token;
 #if UNITY_2020_1_OR_NEWER
             if (request.result == UnityWebRequest.Result.ConnectionError || request.result == UnityWebRequest.Result.ProtocolError)
 #else 
@@ -87,6 +81,16 @@ public partial class TDBridge : MonoBehaviour
                 Debug.LogError(request.error);
                 yield break;
             }
+            string json = request.downloadHandler.text;
+#if UNITY_EDITOR
+            i.jsonText = json;
+#endif
+            token = ParseLogin(json).desc;
+            header = "Taosd " + token;
+#if UNITY_EDITOR        
+        Debug.Log("Logged in. Authorization Method: " + authorizationMethod + ", token:" + token + ", IP:" + ip +
+            "\n This Message will not be sent in build.");
+#endif 
             yield break; 
         }
     }
@@ -129,10 +133,7 @@ public partial class TDBridge : MonoBehaviour
         SetInstance();
         FetchURI();
         FetchHeader();
-        jsonText = null;
-        result = null;
-        Debug.Log("TDBridge initialized." + 
-        "\n Authorization Method: " + authorizationMethod + ", token:" + token + ", IP:" + ip);
+        Debug.Log("TDBridge initialized.");
     }
     private void SetInstance()
     {
@@ -161,6 +162,10 @@ public partial class TDBridge : MonoBehaviour
             case AuthorizationMethod.Basic:
                 token = Base64Encode(userName + ":" + password);
                 header = "Basic " + token;
+#if UNITY_EDITOR        
+        Debug.Log("Authorization Method: " + authorizationMethod + ", token:" + token + ", IP:" + ip +
+            "\n This Message will not be sent in build.");
+#endif 
                 break;
             case AuthorizationMethod.Taosd:
                 StartCoroutine(Login_co());

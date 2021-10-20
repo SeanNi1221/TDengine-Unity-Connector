@@ -11,7 +11,8 @@ public class TDBridgeEditor : Editor
     {
         TDBridge td = (TDBridge)target;
         DrawDefaultInspector();
-        if (GUILayout.Button("Push SQL", GUILayout.Height(32)))
+        GUIContent push = new GUIContent(" Push SQL", (Texture)Resources.Load("terminal"), "Push SQL statement");
+        if (GUILayout.Button(push, GUILayout.Height(32)))
         {
             TDBridge.PushSQL(td.SQL_);           
         }

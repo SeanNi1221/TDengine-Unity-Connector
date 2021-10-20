@@ -9,15 +9,15 @@ namespace Sean21.TDengineConnector
 public class TDRequest
 {
     public TDBridge.TimeEncoding timeEncoding;
-    public UnityWebRequest web;
-    public UnityWebRequestAsyncOperation operation;
-    public TDResult result;
     [TextArea(0,50)]
     public string json;
+    public TDResult result;
     [TextArea(0,50)]
     public string sql;
     [HideInInspector]
     public bool succeeded;
+    public UnityWebRequest web;
+    public UnityWebRequestAsyncOperation operation;
     public TDRequest(string sql)
     {
         this.sql = sql;
