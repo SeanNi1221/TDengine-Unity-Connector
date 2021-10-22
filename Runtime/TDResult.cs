@@ -43,11 +43,9 @@ public class TDResult {
     }
     [Serializable]
     public struct Row {
-        public string title;
         public List<string> value; 
         public Row(List<string> _value = null) {
             this.value = _value;
-            this.title = "row";
         }
     }
 }

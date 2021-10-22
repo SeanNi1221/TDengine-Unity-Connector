@@ -2,9 +2,10 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Sean21.TDengineConnector;
-
+using System;
 public class AnyTest : MonoBehaviour
 {
+    public Tuple<int, string> testTuple;
     public GameObject a;
     public GameObject b;
     public void RunTest()

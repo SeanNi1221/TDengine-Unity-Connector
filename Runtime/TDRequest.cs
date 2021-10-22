@@ -9,6 +9,7 @@ namespace Sean21.TDengineConnector
 public class TDRequest
 {
     [Header("Settings")]
+    [Tooltip("Time encoding method of the returned data. Overriding the global setting in TDBridge.")]
     public TDBridge.TimeEncoding timeEncoding;
     [Header("Terminal")]
     [TextArea(0,100)]
@@ -23,10 +24,18 @@ public class TDRequest
     public bool succeeded;
     public UnityWebRequest web;
     public UnityWebRequestAsyncOperation operation;
+    public TDRequest()
+    {
+        if (TDBridge.i) this.timeEncoding = TDBridge.DefaultTimeEncoding;
+    }
     public TDRequest(string sql)
     {
         this.sql = sql;
-        this.timeEncoding = TDBridge.DefaultTimeEncoding;
+        if (TDBridge.i) this.timeEncoding = TDBridge.DefaultTimeEncoding;
+    }
+    public TDRequest(TDBridge.TimeEncoding format)
+    {
+        this.timeEncoding = format;
     }
     public TDRequest(string sql, TDBridge.TimeEncoding format)
     {
@@ -56,6 +65,10 @@ public class TDRequest
 
     public IEnumerator Send(string SQL)
     {
+        if (string.IsNullOrEmpty(SQL)) {
+            if (TDBridge.DetailedDebugLog) Debug.LogWarning("Cannot send empty string as SQL, aborted!");
+            yield break;
+        }
         sql = SQL;
         string uri = TDBridge.ChooseUri(timeEncoding);
         using ( web = UnityWebRequest.Put(uri, SQL) ){
@@ -68,7 +81,7 @@ public class TDRequest
             if (web.isNetworkError || web.isHttpError)
 #endif
             {
-                Debug.LogError("Failed sending Request: " + SQL + " with error: " + web.error + TDBridge.requestHint(web.responseCode));
+                Debug.LogError("Failed sending Request: " + SQL + " with error: " + web.error + requestHint(web.responseCode));
                 succeeded = false;
                 yield break;
             }
@@ -79,5 +92,13 @@ public class TDRequest
             yield break;
         }
     }
+    private static Func<long, string> requestHint = x => {
+        switch (x) {
+            default:
+                return "";
+            case 400:
+                return ", Possible cause: Invalid SQL statement.";
+        }
+    };
 }
 }

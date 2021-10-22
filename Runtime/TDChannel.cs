@@ -12,18 +12,14 @@ public class TDChannel : MonoBehaviour
     public string databaseName;
     public string superTableName;
     public string tableName;
-    public TDRequest request;
+    public TDRequest request = new TDRequest();
     public bool usingSuperTable = true;
     public bool autoCreate = false;
     public bool insertSpecific = false;
-    void Awake()
-    {
-        GetTarget();
-        SetDefaultValues();
-    }
     void OnEnable()
     {
-        request.channel = this;
+        GetTarget();
+        Initialize();
     }
     private void GetTarget()
     {
@@ -42,7 +38,7 @@ public class TDChannel : MonoBehaviour
             }
         }
     }
-    private void SetDefaultValues()
+    private void Initialize()
     {
         if (string.IsNullOrEmpty(databaseName)) {
             databaseName = TDBridge.DefaultDatabaseName;
@@ -52,6 +48,9 @@ public class TDChannel : MonoBehaviour
         }
         if (string.IsNullOrEmpty(tableName)) {
             tableName = gameObject.name;
+        }
+        if (!request.channel) {
+            request.channel = this;
         }
     }
     public void CreateDatabase()

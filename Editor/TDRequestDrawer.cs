@@ -5,6 +5,12 @@ namespace Sean21.TDengineConnector
 [CustomPropertyDrawer(typeof(TDRequest))]
 public class TDRequestDrawer : PropertyDrawer
 {
+    GUIStyle labelStyle = new GUIStyle();
+    Color labelBG = new Color(0.2f, 0.226f, 0.267f, 1f);
+    void OnEnable()
+    {
+        GUIContent send = new GUIContent(" Send Request", (Texture)Resources.Load("terminal"), "Send SQL Request");
+    }
     public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
     {
         EditorGUI.BeginProperty(position, label, property);
@@ -13,12 +19,12 @@ public class TDRequestDrawer : PropertyDrawer
         EditorGUI.indentLevel = 0;
 
         //Lable style
-        GUIStyle labelStyle = new GUIStyle();
+        // GUIStyle labelStyle = new GUIStyle();
         labelStyle.fontStyle = FontStyle.Bold;
         labelStyle.fontSize = 12;
         labelStyle.alignment = TextAnchor.MiddleLeft;
         labelStyle.normal.textColor = Color.white;
-        Color labelBG = new Color(0.2f, 0.226f, 0.267f, 1f);
+        // Color labelBG = new Color(0.2f, 0.226f, 0.267f, 1f);
         
         //References
         TDRequest td = fieldInfo.GetValue(property.serializedObject.targetObject) as TDRequest;

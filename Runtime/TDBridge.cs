@@ -57,21 +57,21 @@ public partial class TDBridge : MonoBehaviour
         set { i.defaultTimeEncoding = value; }
     }
     [Header("Global Settings")]
-    [Tooltip("Use this time encoding method if not declared")]    
+    [Tooltip("Default time encoding method of newly created TD Requests")]    
     [SerializeField]
     private TimeEncoding defaultTimeEncoding = TimeEncoding.Normal;
     public static int DefaultTextLength {
         get { return i.defaultTextLength; }
         set { i.defaultTextLength = value; }
     }
-    [Tooltip("Length for NCHAR and BINARY if not declared.")]
+    [Tooltip("Default length for NCHAR and BINARY if not specified on declaration.")]
     [SerializeField]
     private int defaultTextLength = 100;
     public static string DefaultDatabaseName {
         get { return i.defaultDatabaseName; }
         set { i.defaultDatabaseName = value; }
     }
-    [Tooltip("Database name if not declared")]
+    [Tooltip("Default database name if not specified on declaration.")]
     [SerializeField]
     private string defaultDatabaseName = "test";
     public static bool DetailedDebugLog {
@@ -84,7 +84,8 @@ public partial class TDBridge : MonoBehaviour
         get{ return i.request; }
     }
     [SerializeField]
-    private TDRequest request = new TDRequest("show databases");
+
+    private TDRequest request = new TDRequest("SHOW DATABASES");
     private string ip;
     private string token;
     public string header {
@@ -97,37 +98,42 @@ public partial class TDBridge : MonoBehaviour
     public enum TimeEncoding { Normal, Unix, UTC }  
     public static readonly List<System.Type> varType = new List<System.Type>{ typeof(System.Object), typeof(System.Boolean), typeof(System.Byte), typeof(System.Int16), typeof(System.Int32), typeof(System.Int64), typeof(System.Single), typeof(System.Double), typeof(bin), typeof(System.DateTime), typeof(System.String), typeof(Vector2), typeof(UnityEngine.Vector3), typeof(UnityEngine.Quaternion), typeof(UnityEngine.Transform)};
     public static readonly List<string> dataType = new List<string>{ "nchar(100)", "bool", "tinyint", "smallint", "int", "bigint", "float", "double", "binary", "timestamp", "nchar", "nchar(36)", "nchar(54)", "nchar(72)", "nchar(164)" };
-    void OnEnable()
+
+    void Awake()
     {
         Initialize();
     }
-    public static void Login() {
-        i.StartCoroutine(i.Login_co());
-    }
-    IEnumerator Login_co()
+    void OnEnable()
     {
-        using ( UnityWebRequest request = UnityWebRequest.Get(uriLogin) ){
+        SetInstance();
+    }
+    public static void Login() {
+        i.StartCoroutine(Login_co());
+    }
+    public static IEnumerator Login_co()
+    {
+        using ( UnityWebRequest login = UnityWebRequest.Get(i.uriLogin) ){
 #if UNITY_EDITOR
-            Debug.Log("Logging in... " + request.uri + "\n This message will not be sent in built");
+            Debug.Log("Logging in... " + login.uri + "\n This message will not be sent in built");
 #else
             Debug.Log("Logging in... ");
 #endif
-            yield return request.SendWebRequest();
+            yield return login.SendWebRequest();
 #if UNITY_2020_1_OR_NEWER
-            if (request.result == UnityWebRequest.Result.ConnectionError || request.result == UnityWebRequest.Result.ProtocolError)
+            if (login.result == UnityWebRequest.Result.ConnectionError || request.result == UnityWebRequest.Result.ProtocolError)
 #else 
-            if (request.isNetworkError || request.isHttpError)
+            if (login.isNetworkError || login.isHttpError)
 #endif
             {
-                Debug.LogError(request.error);
+                Debug.LogError(login.error);
                 yield break;
             }
-            string json = request.downloadHandler.text;
+            string json = login.downloadHandler.text;
 #if UNITY_EDITOR
-            i.request.json = json;
+            Request.json = json;
 #endif
-            token = ParseLogin(json).desc;
-            header = "Taosd " + token;
+            i.token = ParseLogin(json).desc;
+            i.header = "Taosd " + i.token;
             yield break; 
         }
     }
@@ -140,22 +146,13 @@ public partial class TDBridge : MonoBehaviour
     public static void ClearRequest() {
         i.request.Clear();
     }
-
-    public static Func<long, string> requestHint = x => {
-        switch (x) {
-            default:
-                return "";
-            case 400:
-                return ", Possible cause: Invalid SQL statement.";
-        }
-    };
     public void Initialize()
     {
-        SetInstance(); FetchURI(); StartCoroutine(FetchHeader());
+        SetInstance(); i.FetchURI(); i.StartCoroutine(i.FetchHeader());
     }
     private void SetInstance()
     {
-        if (!i) {
+        if (i == null) {
             i = this;
         }
         else if (i != this){

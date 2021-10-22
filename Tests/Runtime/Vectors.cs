@@ -15,6 +15,7 @@ public class Vectors : MonoBehaviour
     public Transform trData;
     public Transform modifier;
     public string formatter = "";
+    
     void Reset()
     {
         if (!trData) {
