@@ -5,21 +5,28 @@ using UnityEditor;
 namespace Sean21.TDengineConnector
 {
 [CustomEditor(typeof(TDBridge))]
+[CanEditMultipleObjects]
 public class TDBridgeEditor : Editor
 {
+    SerializedProperty prop;
     public override void OnInspectorGUI()
     {
         TDBridge td = (TDBridge)target;
-        DrawDefaultInspector();
-        GUIContent push = new GUIContent(" Push SQL", (Texture)Resources.Load("terminal"), "Push SQL statement");
-        if (GUILayout.Button(push, GUILayout.Height(32)))
+        
+        // Insert button before "request" field
+        prop = serializedObject.GetIterator();
+        while(prop.NextVisible(true))
         {
-            TDBridge.PushSQL(td.SQL_);           
+            if (prop.name == "request") {
+                if (GUILayout.Button("Initialize & Login TDBridge", GUILayout.Height(32))) td.Initialize();
+                break;
+            }
+            EditorGUILayout.PropertyField(prop);
         }
-        if (GUILayout.Button("Initialize & Login TDBridge"))
-        {
-            td.Initialize();
-        }
+        //Draw "request" field
+        EditorGUILayout.PropertyField(prop);
+        
+        serializedObject.ApplyModifiedProperties();        
     }
 }
 }

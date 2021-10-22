@@ -58,7 +58,7 @@ public class DataManager : MonoBehaviour
         for (int i=10; i<30; i++) {
             string tb_name = i.ToString();
             string drop = "DROP TABLE IF EXISTS " + "test.t" + tb_name;
-            TDBridge.PushSQL(drop);
+            TDBridge.SendRequest(drop);
             yield return new WaitForEndOfFrame();
         }
     }

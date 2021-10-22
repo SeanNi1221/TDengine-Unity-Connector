@@ -21,6 +21,10 @@ public class TDChannel : MonoBehaviour
         GetTarget();
         SetDefaultValues();
     }
+    void OnEnable()
+    {
+        request.channel = this;
+    }
     private void GetTarget()
     {
         if (target != null) return;
@@ -41,7 +45,7 @@ public class TDChannel : MonoBehaviour
     private void SetDefaultValues()
     {
         if (string.IsNullOrEmpty(databaseName)) {
-            databaseName = TDBridge.i.defaultDatabaseName;
+            databaseName = TDBridge.DefaultDatabaseName;
         }
         if (string.IsNullOrEmpty(superTableName)) {
             if (target != null) superTableName = target.GetType().Name;
@@ -97,6 +101,9 @@ public class TDChannel : MonoBehaviour
     {
         StartCoroutine(request.Send());
     }
+    public void SendRequest(string sql) {
+        StartCoroutine(request.Send(sql));
+    }
     public void Pull()
     {
         StartCoroutine(PullCo());
@@ -133,6 +140,10 @@ public class TDChannel : MonoBehaviour
             }
         }
         StartCoroutine(request.Send());
+    }
+    public void ClearRequest()
+    {
+        request.Clear();
     }
 }
 }

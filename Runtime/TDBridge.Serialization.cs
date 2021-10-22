@@ -10,72 +10,72 @@ public partial class TDBridge
     const string Dot = ".";
     const string Space = " ";
     public static void CreateDatabase(string db_name = null, bool if_not_exists = true) {
-        PushSQL(SQL.CreateDatabase(db_name, if_not_exists));
+        SendRequest(SQL.CreateDatabase(db_name, if_not_exists));
     }
     public static void CreateSTable<T>(string db_name = null, string stb_name = null, string timestamp_field_name = "ts", bool if_not_exists = true) {
         string sql = SQL.CreateSTable<T>(db_name, stb_name, timestamp_field_name, if_not_exists);
-        PushSQL(sql);
+        SendRequest(sql);
     }
     public static void CreateSTable(UnityEngine.Object obj, string db_name = null, string stb_name = null, string timestamp_field_name = "ts", bool if_not_exists = true) {
         string sql = SQL.CreateSTable(obj, db_name, stb_name, timestamp_field_name, if_not_exists);
-        PushSQL(sql);
+        SendRequest(sql);
     }
     public static void CreateTable<T>(string db_name = null, string tb_name = null, string timestamp_field_name = "ts", bool if_not_exists = true) {
         string sql = SQL.CreateTable<T>(db_name, tb_name,timestamp_field_name,if_not_exists);
-        PushSQL(sql);
+        SendRequest(sql);
     }
     public static void CreateTable(UnityEngine.Object obj, string db_name = null, string tb_name = null, string timestamp_field_name = "ts", bool if_not_exists = true) {
         string sql = SQL.CreateTable(obj, db_name, tb_name, timestamp_field_name, if_not_exists);
-        PushSQL(sql);
+        SendRequest(sql);
     }
     public static void CreateTableUsing(UnityEngine.Object obj, string db_name = null, string tb_name = null, string stb_name = null, bool if_not_exists = true) {
         string sql = SQL.CreateTableUsing(obj, db_name, tb_name, stb_name, if_not_exists);
-        PushSQL(sql);
+        SendRequest(sql);
     }
     public static void CreateTableUsing(UnityEngine.Object[] objects, string db_name = null, string[] tb_names = null, string stb_name = null, bool if_not_exists = true) {
         string sql = SQL.CreateTableUsing(objects, db_name, tb_names, stb_name, if_not_exists);
-        PushSQL(sql);
+        SendRequest(sql);
     }
     public static void Insert(UnityEngine.Object obj, string db_name = null, string tb_name = null, string time = "NOW") {
         string sql = SQL.Insert(obj, db_name, tb_name, time);
-        PushSQL(sql);
+        SendRequest(sql);
     }
     public static void Insert(UnityEngine.Object[] objects, string db_name = null, string[] _tb_name = null, string[] _time = null) {
         string sql = SQL.Insert(objects, db_name,_tb_name, _time);
-        PushSQL(sql);
+        SendRequest(sql);
     }
     public static void InsertSpecific(UnityEngine.Object obj, string db_name = null, string tb_name = null,string timestamp_field_name = "ts", string time = "NOW") {
         string sql = SQL.InsertSpecific(obj, db_name, tb_name, timestamp_field_name, time);
-        PushSQL(sql);
+        SendRequest(sql);
     }
     public static void InsertSpecific(UnityEngine.Object[] objects, string db_name = null, string[] _tb_name = null, string timestamp_field_name = "ts", string[] _time = null) {
         string sql = SQL.InsertSpecific(objects, db_name, _tb_name, timestamp_field_name, _time);
-        PushSQL(sql);
+        SendRequest(sql);
     }
     public static void InsertUsing(UnityEngine.Object obj, string db_name = null, string stb_name = null, string tb_name = null, string time = "NOW") {
         string sql = SQL.InsertUsing(obj, db_name, stb_name, tb_name, time);
-        PushSQL(sql);
+        SendRequest(sql);
     }
     public static void InsertUsing(UnityEngine.Object[] objects, string db_name = null, string stb_name = null, string[] _tb_name = null, string[] _time = null) {
         string sql = SQL.InsertUsing(objects, db_name, stb_name, _tb_name, _time);
-        PushSQL(sql);
+        SendRequest(sql);
     }
     public static void InsertSpecificUsing(UnityEngine.Object obj, string db_name = null, string stb_name = null, string tb_name = null, string time = "NOW") {
         string sql = SQL.InsertSpecificUsing(obj, db_name, stb_name, tb_name, time);
-        PushSQL(sql);
+        SendRequest(sql);
     }
     public static void InsertSpecificUsing(UnityEngine.Object[] objects, string db_name = null, string stb_name = null, string[] _tb_name = null, string timestamp_field_name = "ts", string[] _time = null) {
         string sql = SQL.InsertSpecificUsing(objects, db_name, stb_name, _tb_name, timestamp_field_name, _time);
-        PushSQL(sql);
+        SendRequest(sql);
     }
     public static void SetTag(UnityEngine.Object obj, string tag_name, string db_name = null, string tb_name = null) {
         string sql = SQL.SetTag(obj, tag_name, db_name, tb_name);
-        PushSQL(sql);
+        SendRequest(sql);
     }
     public static IEnumerator SetTags(UnityEngine.Object obj, string db_name = null, string tb_name = null) {
         List<string> sqls = SQL.SetTags(obj, db_name, tb_name);
         foreach (string sql in sqls) {
-            PushSQL(sql);
+            SendRequest(sql);
             yield return new WaitForEndOfFrame();
         }
     }
@@ -158,7 +158,7 @@ public partial class TDBridge
                         if ( SQL.isTextData(type) ) {
                             if (col.length < newCol.length) {
                                 resizing.Add(i.StartCoroutine(
-                                    Push(action + SQL.Quote(db_name) + Dot + SQL.Quote(tb_name) + resize + col.name +
+                                    i.request.Send(action + SQL.Quote(db_name) + Dot + SQL.Quote(tb_name) + resize + col.name +
                                         Space + dataType[type] + SQL.Bracket(newCol.length.ToString())
                                     )
                                 ));
@@ -174,7 +174,7 @@ public partial class TDBridge
             if (shouldDrop) {
                 dropping.Add(
                     i.StartCoroutine(
-                    Push(action + db_name + Dot + tb_name + drop + col.name)
+                    i.request.Send(action + db_name + Dot + tb_name + drop + col.name)
                 ));
                 dropped.Add(col);
                 Debug.LogWarning("Culomn " + col.name + " has been dropped, with all the data inside lost!");
@@ -197,7 +197,7 @@ public partial class TDBridge
                 string lengthDeclaration = newCol.isResizable? SQL.Bracket(newCol.length):string.Empty;
                 adding.Add(
                     i.StartCoroutine(
-                        Push(action + db_name + Dot + tb_name + add + newCol.name +
+                        i.request.Send(action + db_name + Dot + tb_name + add + newCol.name +
                             Space + dataType[newCol.typeIndex] + lengthDeclaration
                             )
                 ));
@@ -257,10 +257,10 @@ public class DataField : Attribute
 {    
     public int length; 
     public DataField(int l) {
-        this.length = l <=0  ? TDBridge.i.defaultTextLength : l;
+        this.length = l <=0  ? TDBridge.DefaultTextLength : l;
     }
     public DataField() {
-        this.length = TDBridge.i.defaultTextLength;
+        this.length = TDBridge.DefaultTextLength;
     }
 }
 [AttributeUsage(AttributeTargets.Field)]
@@ -268,10 +268,10 @@ public class DataTag : Attribute
 {
     public int length; 
     public DataTag(int l) {
-        this.length = l <=0  ? TDBridge.i.defaultTextLength : l;
+        this.length = l <=0  ? TDBridge.DefaultTextLength : l;
     }
     public DataTag() {
-        this.length = TDBridge.i.defaultTextLength;
+        this.length = TDBridge.DefaultTextLength;
     }    
 }
 }

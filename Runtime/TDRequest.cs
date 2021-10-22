@@ -8,12 +8,17 @@ namespace Sean21.TDengineConnector
 [Serializable]
 public class TDRequest
 {
+    [Header("Settings")]
     public TDBridge.TimeEncoding timeEncoding;
-    [TextArea(0,50)]
+    [Header("Terminal")]
+    [TextArea(0,100)]
+    public string sql;
+    [Header("Response")]
+    [TextArea(0,100)]
     public string json;
     public TDResult result;
-    [TextArea(0,50)]
-    public string sql;
+    [HideInInspector]
+    public TDChannel channel;
     [HideInInspector]
     public bool succeeded;
     public UnityWebRequest web;
@@ -21,7 +26,7 @@ public class TDRequest
     public TDRequest(string sql)
     {
         this.sql = sql;
-        this.timeEncoding = TDBridge.i.defaultTimeEncoding;
+        this.timeEncoding = TDBridge.DefaultTimeEncoding;
     }
     public TDRequest(string sql, TDBridge.TimeEncoding format)
     {
@@ -34,6 +39,15 @@ public class TDRequest
         json = null;
         sql = null;
         succeeded = false;
+    }
+    public void Push()
+    {
+        Push(sql);
+    }
+    public void Push(string SQL)
+    {
+        if (channel) channel.SendRequest(SQL);
+        else TDBridge.SendRequest(SQL);
     }
     public IEnumerator Send()
     {

@@ -44,13 +44,9 @@ public class TDChannelEditor : Editor
             "*Note: NCHAR/BINARY columns with shorter length in the Target class than in the table will be DROPPED and re-created.");
         GUIContent autoCreateLabel = new GUIContent("Auto Create", "On insert, auto create table if not exists using the super table.");
         GUIContent insertSpecificLabel = new GUIContent(" Insert Specific", "Turn this on if the sequence of fields differ from that of comlumns in the table.");
-
         GUIContent insert = new GUIContent(" Insert", (Texture)Resources.Load("insert"), "Insert Values");
-        GUIContent send = new GUIContent(" Send Request", (Texture)Resources.Load("terminal"), "Send SQL Request");
-        GUIContent clearRequest = new GUIContent( (Texture)Resources.Load("clear"), "Clear Request");
         
         TDChannel td = (TDChannel)target;
-        // DrawDefaultInspector();
         EditorGUILayout.PropertyField(targetProp);
         
         //DB
@@ -107,17 +103,7 @@ public class TDChannelEditor : Editor
         }        
 
         //Request
-        EditorGUILayout.PropertyField(requestProp);
-        GUILayout.BeginHorizontal();
-        if (GUILayout.Button(send, GUILayout.Height(32)))
-        {
-            td.SendRequest();           
-        }
-        if ( GUILayout.Button(clearRequest, GUILayout.Width(32), GUILayout.Height(32))){
-            td.request.Clear();
-        } 
-        GUILayout.EndHorizontal();
-
+        EditorGUILayout.PropertyField(requestProp,true);
         serializedObject.ApplyModifiedProperties();        
     }
 }
