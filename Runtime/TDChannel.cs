@@ -21,6 +21,7 @@ public class TDChannel : MonoBehaviour
         GetTarget();
         Initialize();
     }
+    //Search for the first component that has either [DataTag] or [DataField] attribute, and make it target
     private void GetTarget()
     {
         if (target != null) return;
@@ -38,6 +39,7 @@ public class TDChannel : MonoBehaviour
             }
         }
     }
+    //Cache every Tag and Field in dictionaries to boost performance.
     private void Initialize()
     {
         if (string.IsNullOrEmpty(databaseName)) {
@@ -85,17 +87,6 @@ public class TDChannel : MonoBehaviour
         request.sql = "DROP TABLE IF EXISTS " + databaseName + "." + tableName;
         StartCoroutine(request.Send());
     }
-    public void SetTags()
-    {
-        StartCoroutine(SetTagsCo());
-    }
-    public IEnumerator SetTagsCo() {
-        List<string> sqls = SQL.SetTags(target, databaseName, tableName);
-        foreach (string _sql in sqls) {
-            request.sql = _sql;
-            yield return request.Send();
-        }
-    }
     public void SendRequest()
     {
         StartCoroutine(request.Send());
@@ -103,19 +94,46 @@ public class TDChannel : MonoBehaviour
     public void SendRequest(string sql) {
         StartCoroutine(request.Send(sql));
     }
-    public void Pull()
+    public void Pull(params string[] column_names)
     {
-        StartCoroutine(PullCo());
+        StartCoroutine(pull(column_names));
     }
-    public IEnumerator PullCo()
-    {
-        yield return request.Send(SQL.GetLastRow(target, "*", true, databaseName, tableName));
+    public IEnumerator pull(params string[] column_names)
+    {        
+        
+        bool allTags = column_names.Length < 1?
+                            true : false;
+        
+        string fieldNames = column_names.Length < 1?
+                                "*":
+                                string.Join(", ", column_names);
+        yield return request.Send(SQL.GetLastRow(target, fieldNames, null, databaseName, tableName));
         if (!request.succeeded) {
             Debug.LogError("Failed Pulling fields! Please enable 'Detailed Debug Log' for detailes.");
             yield break;
         }
         TDBridge.FromTD(ref target, request.result);
+
     }
+    public void Push(params string[] tag_names)
+    {
+        StartCoroutine(push(tag_names));
+    }
+    public IEnumerator push(params string[] tag_names) {
+        List<string> sqls = SQL.SetTags(target, databaseName, tableName, tag_names);
+        Debug.Log("sqls[0]: " + sqls[0]);
+        foreach (string sql in sqls) {
+            request.sql = sql;
+            yield return request.Send();
+        }
+    }
+    // public IEnumerator push() {
+    //     List<string> sqls = SQL.SetTags(target, databaseName, tableName);
+    //     foreach (string _sql in sqls) {
+    //         request.sql = _sql;
+    //         yield return request.Send();
+    //     }
+    // }
     public void Alter()
     {
         StartCoroutine(TDBridge.AlterSTableOf(target, databaseName, superTableName));

@@ -38,28 +38,47 @@ public partial class TDBridge
             object fieldValue = field.GetValue(obj);
             field.SetValue( obj, deserializeValue(result.data[row].value[i], fieldValue));
         }
+        Debug.Log("Deserializeing done.");
         return obj;        
     }
-    static Func<string, object, object> deserializeValue = (data, fieldValue) => {
+    public static Func<string, object, object> deserializeValue = (data, fieldValue) => {
         Type fieldType = fieldValue.GetType();
         switch ( varType.IndexOf(fieldType))
-        {
-            default: return data;
-            case 1: return data == "1" || data =="true";
-            case 2: return Byte.Parse(data);
-            case 3: return Int16.Parse(data);
-            case 4: return Int32.Parse(data);
-            case 5: return Int64.Parse(data);
-            case 6: return Single.Parse(data);
-            case 7: return Double.Parse(data);
-            case 8: return new bin(data);
-            case 9: return DateTime.Parse(data);
+        {            
+            default: {
+                Debug.LogError("Unsupported type: " + fieldType.Name + ". Deserialization failed!");
+                return data;
+            }
+            case 1: return deserializeBool(data);
+            case 2: return deserializeByte(data);
+            case 3: return deserializeInt16(data);
+            case 4: return deserializeInt32(data);
+            case 5: return deserializeInt64(data);
+            case 6: return deserializeSingle(data);
+            case 7: return deserializeDouble(data);
+            case 8: return deserializeBin(data);
+            case 9: return deserializeDateTime(data);
             case 10: return data;
-            case 11: return string.IsNullOrEmpty(data)||data=="null"? Vector2.zero : ParseVector2(data);
-            case 12: return string.IsNullOrEmpty(data)||data=="null"? Vector3.zero : ParseVector3(data);
-            case 13: return string.IsNullOrEmpty(data)||data=="null"? Quaternion.identity : ParseQuaternion(data);
-            case 14: return string.IsNullOrEmpty(data)||data=="null"? fieldValue as Transform : ParseTransform(data, fieldValue as Transform);
+            case 11: return deserializeVector2(data);
+            case 12: return deserializeVector3(data);
+            case 13: return deserializeQuaternion(data);
+            case 14: return deserializeTransform(data, fieldValue as Transform);
         }
     };
+    public static Func<string, bool> deserializeBool = data => data == "1" || data =="true";
+    public static Func<string, Byte> deserializeByte = data => Byte.Parse(data);
+    public static Func<string, Int16> deserializeInt16 = data => Int16.Parse(data);
+    public static Func<string, int> deserializeInt = data => int.Parse(data);
+    public static Func<string, Int32> deserializeInt32 = data => Int32.Parse(data);
+    public static Func<string, Int64> deserializeInt64 = data => Int64.Parse(data);
+    public static Func<string, float> deserializeFloat = data => float.Parse(data);
+    public static Func<string, Single> deserializeSingle = data => Single.Parse(data);
+    public static Func<string, Double> deserializeDouble = data => Double.Parse(data);
+    public static Func<string, bin> deserializeBin = data => new bin(data);
+    public static Func<string, DateTime> deserializeDateTime = data => DateTime.Parse(data);
+    public static Func<string, Vector2> deserializeVector2= data => string.IsNullOrEmpty(data)||data=="null"? Vector2.zero : ParseVector2(data);
+    public static Func<string, Vector3> deserializeVector3= data => string.IsNullOrEmpty(data)||data=="null"? Vector3.zero : ParseVector3(data);
+    public static Func<string, Quaternion> deserializeQuaternion= data => string.IsNullOrEmpty(data)||data=="null"? Quaternion.identity : ParseQuaternion(data);
+    public static Func<string, Transform, Transform> deserializeTransform= (data, tr) => string.IsNullOrEmpty(data)||data=="null"? tr : ParseTransform(data, tr);
 }
 }

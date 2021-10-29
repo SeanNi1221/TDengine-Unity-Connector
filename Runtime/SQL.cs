@@ -19,14 +19,22 @@ public static class SQL
         string columnNames = ColumnNamesWithoutTS(obj);
         return action + columnNames + " FROM " + db_name + Dot + tb_name + option; 
     }
-    // SELECT LAST_ROW(columnNames) FROM test.TH_Meter0001
-    public static string GetLastRow(UnityEngine.Object obj, string columnNames = "*", bool withTags = false, string db_name = null, string tb_name = null) {
+   // SELECT LAST_ROW(columnNames) FROM test.TH_Meter0001
+    // public static string GetLastRow(UnityEngine.Object obj, string columnNames = "*", bool withTags = false, string db_name = null, string tb_name = null) {
+    //     string action = "SELECT LAST_ROW";
+    //     db_name = SetDatabaseName(db_name);
+    //     tb_name = SetTableNameWith(obj, tb_name);
+    //     return withTags?
+    //         action + Bracket(columnNames) + "," + TagNames(obj, false) + " FROM " + db_name + Dot + tb_name :            
+    //         action + Bracket(columnNames) + " FROM " + db_name + Dot + tb_name; 
+    // }
+    public static string GetLastRow(UnityEngine.Object obj, string fieldNames = "*", string tagNames = null, string db_name = null, string tb_name = null, bool allTags = false) {
         string action = "SELECT LAST_ROW";
         db_name = SetDatabaseName(db_name);
         tb_name = SetTableNameWith(obj, tb_name);
-        return withTags?
-            action + Bracket(columnNames) + "," + TagNames(obj, false) + " FROM " + db_name + Dot + tb_name :            
-            action + Bracket(columnNames) + " FROM " + db_name + Dot + tb_name; 
+        return allTags?
+            action + Bracket(fieldNames) + "," + TagNames(obj, false) + " FROM " + db_name + Dot + tb_name :            
+            action + Bracket(fieldNames) + (string.IsNullOrEmpty(tagNames)? "" : ("," + tagNames)) + " FROM " + db_name + Dot + tb_name; 
     }
     // SELECT tag1_name, tag2_name FROM test.TH_Meter0001
     public static string GetTags(UnityEngine.Object obj, string db_name = null, string tb_name = null) {
@@ -207,18 +215,24 @@ public static class SQL
         }
         return (tb_name, time);            
     };
-//ALTER TABLE tb_name SET TAG tag1_name=new_tag1_value; ALTER TABLE tb_name SET TAG tag1_name=new_tag1_value;
-    public static List<string> SetTags(UnityEngine.Object obj, string db_name = null, string tb_name = null) {
+//ALTER TABLE tb_name SET TAG tag1_name=new_tag1_value; ALTER TABLE tb_name SET TAG tag2_name=new_tag2_value;
+    public static List<string> SetTags(UnityEngine.Object obj, string db_name = null, string tb_name = null, params string[] tag_names) {
         string action  = "ALTER TABLE ";
         string operation = " SET TAG ";
         List<string> sqls = new List<string>();
         db_name = SQL.SetDatabaseName(db_name);
         tb_name = SQL.SetTableNameWith(obj);
-        foreach (var field in obj.GetType().GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)) {
-            DataTag dt = Attribute.GetCustomAttribute(field, typeof(DataTag)) as DataTag;
-            if (dt != null) {
-                string new_tag_value = serializeValue(obj, field, dt.length);                                       
+        if (tag_names.Length < 1 ) {
+            foreach (var field in obj.GetType().GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)) {
+                DataTag dt = Attribute.GetCustomAttribute(field, typeof(DataTag)) as DataTag;
+                if (dt == null) continue;
+                string new_tag_value = TDBridge.serializeValue(obj, field, dt.length);                                       
                 sqls.Add(action + db_name + Dot + tb_name + operation + field.Name + "=" + new_tag_value);
+            }
+        }
+        else {
+            foreach (string tag_name in tag_names) {
+                sqls.Add(SetTag(obj, tag_name, db_name, tb_name));
             }
         }
         return sqls;
@@ -230,12 +244,17 @@ public static class SQL
         string new_tag_value = null;
         db_name = SQL.SetDatabaseName(db_name);
         tb_name = SQL.SetTableNameWith(obj);            
-        foreach (var field in obj.GetType().GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)) {
-            DataTag dt = Attribute.GetCustomAttribute(field, typeof(DataTag)) as DataTag;
-            if (dt != null && field.Name.Equals(tag_name, StringComparison.InvariantCultureIgnoreCase)) {
-                new_tag_value = serializeValue(obj, field, dt.length);                                       
-            }
-        }
+        // foreach (var field in obj.GetType().GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)) {
+        //     DataTag dt = Attribute.GetCustomAttribute(field, typeof(DataTag)) as DataTag;
+        //     if (dt != null && field.Name.Equals(StringComparison.InvariantCultureIgnoreCase)) {
+        //         new_tag_value = TDBridge.serializeValue(obj, field, dt.length);                                       
+        //     }
+        // }
+        var field = obj.GetType().GetField(tag_name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.IgnoreCase); 
+        if (field == null) { Debug.LogError("Cannot find field " + tag_name + " in object " + obj.name); return string.Empty;}
+        DataTag dt = Attribute.GetCustomAttribute(field, typeof(DataTag)) as DataTag;
+        if (dt == null) {Debug.LogError("Field " + tag_name + " is not a Tag, please add [DataTag] attribute first!"); return string.Empty;}
+        new_tag_value = TDBridge.serializeValue(obj, field, dt.length);
         return action + db_name + Dot + tb_name + operation + tag_name + "=" + new_tag_value;
     }
     public static string FieldNames(UnityEngine.Object obj, string timestamp_field_name = "ts", bool withBracket = true) {
@@ -370,7 +389,7 @@ public static class SQL
         foreach (var field in obj.GetType().GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)) {
             DataField df = Attribute.GetCustomAttribute(field, typeof(DataField)) as DataField;
             if (df != null) {
-                string value = serializeValue(obj, field, df.length);                  
+                string value = TDBridge.serializeValue(obj, field, df.length);                  
                 fieldValues.Add(value);
             }
         }
@@ -382,44 +401,12 @@ public static class SQL
         foreach (var field in obj.GetType().GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)) {
             DataTag dt = Attribute.GetCustomAttribute(field, typeof(DataTag)) as DataTag;
             if (dt != null) {
-                string value = serializeValue(obj, field, dt.length);                                       
+                string value = TDBridge.serializeValue(obj, field, dt.length);                                       
                 tagValues.Add(value);
             }
         }
         return " TAGS" + Bracket( string.Join(", " , tagValues) );
     }       
-    static Func<UnityEngine.Object, FieldInfo, int, string> serializeValue = (obj, field, textLength) => {
-        var fieldValue =  field.GetValue(obj);
-        if (fieldValue == null) return "NULL";
-        int typeIndex = TDBridge.varType.IndexOf(field.FieldType);
-        switch (typeIndex)
-        {
-            default: return fieldValue.ToString();
-            case 5: return ((System.Int64)fieldValue).ToString("R");
-            case 6: return ((float)fieldValue).ToString("G9");
-            case 7: return ((System.Double)fieldValue).ToString("G17");
-            case 9: 
-                var dateTime = (System.DateTime)fieldValue;
-                return Quote( dateTime.ToString("yyyy-MM-dd HH:mm:ss.fff") );
-            case 8: case 10:
-                string textValue = fieldValue.ToString();
-                if( textValue.Length > textLength) { Debug.LogWarning("Value overlength: " + textValue + ". operation can fail!"); }
-                return Quote(textValue);
-            case 11:
-                return ((Vector2)fieldValue).ToString("G9");
-            case 12:
-                return ((Vector3)fieldValue).ToString("G9");
-            case 13:
-                return ((Quaternion)fieldValue).ToString("G9");
-            case 14:
-                return Quote(SerializeTransform(fieldValue as Transform));
-        }
-    };
-    public static string SerializeTransform(Transform tr)
-    {
-        if (!tr) return string.Empty;
-        return tr.localPosition.ToString("G9") + "," + tr.localEulerAngles.ToString("G9") + "," + tr.localScale.ToString("G9");
-    }
 //Too expensive to excecute. Deprecated.
     static Func< List<int>, List<string>, List<string> > resortValues = (index, source) => {
         if (index == null) return source;

@@ -48,5 +48,23 @@ public class TDResult {
             this.value = _value;
         }
     }
+    public string Value(int valueIndex)
+    {
+        return Value(0, valueIndex);
+    }
+    public string Value(int rowIndex, int valueIndex)
+    {
+        return data[rowIndex].value[valueIndex];
+    }
+    public string Value(string column_name)
+    {
+        return Value(0, column_name);
+    }
+    public string Value(int rowIndex, string column_name)
+    {
+        int valueIndex = column_meta.FindIndex(x => x.name.Equals(column_name, StringComparison.OrdinalIgnoreCase));
+        return data[rowIndex].value[valueIndex];
+    }
+    
 }
 }

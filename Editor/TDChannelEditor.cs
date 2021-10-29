@@ -34,14 +34,15 @@ public class TDChannelEditor : Editor
         GUIContent dropS = new GUIContent( (Texture)Resources.Load("removeS"), "Drop Super Table");
         GUIContent create = new GUIContent(" Create Table", (Texture)Resources.Load("create"), "Create Table for Target");
         GUIContent drop = new GUIContent( (Texture)Resources.Load("remove"), "Drop Table");
-        GUIContent pull = new GUIContent(" Pull All", (Texture)Resources.Load("pull"), "Pull Tags and the last row of Fields from the table");
-        GUIContent push = new GUIContent(" Set Tags", (Texture)Resources.Load("push"), "Set Tags by current values of the Target object");
+        GUIContent pull = new GUIContent(" Pull", (Texture)Resources.Load("pull"), "Read the last row(fields and tags) from the table and update values of the Target object");
+        GUIContent push = new GUIContent(" Push", (Texture)Resources.Load("push"), "Overwrite all tags of the table with current values of the Target object");
         GUIContent alter = new GUIContent( (Texture)Resources.Load("alter"), "Alter Super Table\n \n"+
-            "Performs the following operations: \n"+
-            "1. Drop all columns that no longer exists in Target class.\n"+
-            "2. Resize NCHAR and BINARY columns if needed, according to Target class.\n"+
-            "3. Add new columns of Target class into the super table.\n"+
-            "*Note: NCHAR/BINARY columns with shorter length in the Target class than in the table will be DROPPED and re-created.");
+            "Apply changes on the shape of the super table.\n"+
+            "Specifically performs the following operations in sequence: \n"+
+            "1. Drop all columns that no longer exists in Target object.\n"+
+            "2. Resize NCHAR and BINARY columns if needed, according to the Target object.\n"+
+            "3. Add new fields/tags of the Target object into the super table.\n"+
+            "*Note: NCHAR/BINARY columns with shorter length in the Target object than in the super table will be DROPPED and re-created.");
         GUIContent autoCreateLabel = new GUIContent("Auto Create", "On insert, auto create table if not exists using the super table.");
         GUIContent insertSpecificLabel = new GUIContent(" Insert Specific", "Turn this on if the sequence of fields differ from that of comlumns in the table.");
         GUIContent insert = new GUIContent(" Insert", (Texture)Resources.Load("insert"), "Insert Values");
@@ -87,7 +88,7 @@ public class TDChannelEditor : Editor
             td.Pull();
         }
         if ( GUILayout.Button(push, GUILayout.Height(24)) ){
-            td.SetTags();
+            td.Push(new string[]{"Name"});
         }        
         if ( GUILayout.Button(alter, GUILayout.Width(32), GUILayout.Height(24)) ){
             td.Alter();

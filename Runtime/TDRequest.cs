@@ -6,22 +6,26 @@ using System;
 namespace Sean21.TDengineConnector
 {
 [Serializable]
+[ExecuteInEditMode]
 public class TDRequest
 {
     [Header("Settings")]
     [Tooltip("Time encoding method of the returned data. Overriding the global setting in TDBridge.")]
     public TDBridge.TimeEncoding timeEncoding;
+    public bool enableTimer;
     [Header("Terminal")]
     [TextArea(0,100)]
     public string sql;
     [Header("Response")]
     [TextArea(0,100)]
     public string json;
+    public float responseTime;
     public TDResult result;
     [HideInInspector]
     public TDChannel channel;
     [HideInInspector]
     public bool succeeded;
+    [HideInInspector]
     public UnityWebRequest web;
     public UnityWebRequestAsyncOperation operation;
     public TDRequest()
@@ -45,9 +49,11 @@ public class TDRequest
     public void Clear()
     {
         result.Clear();
+
         json = null;
         sql = null;
         succeeded = false;
+        responseTime = 0f;
     }
     public void Push()
     {
@@ -64,7 +70,8 @@ public class TDRequest
     }
 
     public IEnumerator Send(string SQL)
-    {
+    {        
+        succeeded = false;
         if (string.IsNullOrEmpty(SQL)) {
             if (TDBridge.DetailedDebugLog) Debug.LogWarning("Cannot send empty string as SQL, aborted!");
             yield break;
@@ -74,7 +81,31 @@ public class TDRequest
         using ( web = UnityWebRequest.Put(uri, SQL) ){
             Debug.Log("Connecting: " + web.uri);
             web.SetRequestHeader("Authorization", TDBridge.i.header);
-            yield return operation = web.SendWebRequest();
+            web.timeout = TDBridge.RequestTimeLimit;
+            operation = web.SendWebRequest();
+            if (enableTimer) {
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.update += TDBridge.ConstantLoopUpdate;
+#endif
+                responseTime = 0f;
+                while(!web.isDone) {
+                    responseTime += Time.deltaTime;
+                    //Incase Enable Timer is turned off during timing process.
+                    if (!enableTimer) {
+
+#if UNITY_EDITOR
+            UnityEditor.EditorApplication.update -= TDBridge.ConstantLoopUpdate;
+#endif                        
+                        break;
+                    }
+                    yield return null;
+                }
+            }
+            yield return operation;
+#if UNITY_EDITOR
+        if (enableTimer)
+            UnityEditor.EditorApplication.update -= TDBridge.ConstantLoopUpdate;
+#endif
 #if UNITY_2020_1_OR_NEWER
             if (web.result == UnityWebRequest.Result.ConnectionError || web.result == UnityWebRequest.Result.ProtocolError)
 #else 
@@ -85,7 +116,7 @@ public class TDRequest
                 succeeded = false;
                 yield break;
             }
-            Debug.Log("Successfully sent Request: \n" + SQL);
+            Debug.Log("Request succeeded" + (enableTimer? " in " + responseTime + " s" : "") + ":\n" + SQL);
             json = web.downloadHandler.text;
             result = TDBridge.Parse(json);
             succeeded = true;

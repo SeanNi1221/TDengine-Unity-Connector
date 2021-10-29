@@ -38,7 +38,7 @@ public class Vectors : MonoBehaviour
             v3s + "," +
             v3s + "," +
             v3s;
-        string mods = SQL.SerializeTransform(modifier);
+        string mods = TDBridge.serializeTransform(modifier);
 
         print("parsed float:" + parsedFloat);
         print("length:" + stringlengthTest.Length);
@@ -51,9 +51,9 @@ public class Vectors : MonoBehaviour
         print("tr string: " + trs + " Length: " + trs.Length + " TypeIndex: " + TDBridge.varType.IndexOf(trData.GetType()) );
         
         print("modifer: " + mods);
-        print("transform: " + SQL.SerializeTransform(trData));
-        print("result transform:" + SQL.SerializeTransform(TDBridge.ParseTransform(mods, trData)));
-        // print("result ref transform:" + SQL.SerializeTransform(TDBridge.ParseTransform(mods, ref trData)));
+        print("transform: " + TDBridge.serializeTransform(trData));
+        print("result transform:" + TDBridge.serializeTransform(TDBridge.ParseTransform(mods, trData)));
+        // print("result ref transform:" + TDBridge.serializeTransform(TDBridge.ParseTransform(mods, ref trData)));
 
     }
 }

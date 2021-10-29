@@ -9,21 +9,19 @@ namespace Sean21.TDengineConnector
 public partial class TDBridge : MonoBehaviour
 {
     public static TDBridge i{get; private set;}
-    [SerializeField]
     private static string IpForEditor {
         get { return i.ipForEditor; }
         set { i.ipForEditor = value; }
     }
     [Header("Server")]
-    [Tooltip("The Server IP to be used if running in Unity Editor. This is for convenience during development." + "\n" +
-    "e.g., In a typical B/S architecture, you have the same machine as both database server and web server, so you use 192.168.5.5 to connect to the database in the Unity Editor, and use 127.0.0.1 for the same purpose in the deployed webGL environment.")]
+    [Tooltip("The Server IP to be used if running in Unity Editor.")]
     [SerializeField]
     private string ipForEditor = "127.0.0.1";
     public static string IpForBuild {
         get { return i.ipForBuild; }
         set { i.ipForBuild = value; }
     }
-    [Tooltip("The Server IP to be used if running in Build Application. It needs to direct to the same server as the above one.")]
+    [Tooltip("The Server IP to be used if running in Built App.")]
     [SerializeField]
     private string ipForBuild = "127.0.0.1";
     public static string Port {
@@ -31,6 +29,7 @@ public partial class TDBridge : MonoBehaviour
         set { i.port = value; }
     }
     [SerializeField]
+    [Tooltip("The Restful Connector port of TDengine server.")]
     private string port = "6041";
     public enum AuthorizationMethod { Basic, Taosd }
     public static AuthorizationMethod Authorization {
@@ -56,7 +55,13 @@ public partial class TDBridge : MonoBehaviour
         get { return i.defaultTimeEncoding; }
         set { i.defaultTimeEncoding = value; }
     }
+    public static int RequestTimeLimit {
+        get { return i.requestTimeLimit; }
+        set { i.requestTimeLimit = value; }
+    }
     [Header("Global Settings")]
+    [SerializeField]
+    private int requestTimeLimit = 15;
     [Tooltip("Default time encoding method of newly created TD Requests")]    
     [SerializeField]
     private TimeEncoding defaultTimeEncoding = TimeEncoding.Normal;
@@ -98,7 +103,6 @@ public partial class TDBridge : MonoBehaviour
     public enum TimeEncoding { Normal, Unix, UTC }  
     public static readonly List<System.Type> varType = new List<System.Type>{ typeof(System.Object), typeof(System.Boolean), typeof(System.Byte), typeof(System.Int16), typeof(System.Int32), typeof(System.Int64), typeof(System.Single), typeof(System.Double), typeof(bin), typeof(System.DateTime), typeof(System.String), typeof(Vector2), typeof(UnityEngine.Vector3), typeof(UnityEngine.Quaternion), typeof(UnityEngine.Transform)};
     public static readonly List<string> dataType = new List<string>{ "nchar(100)", "bool", "tinyint", "smallint", "int", "bigint", "float", "double", "binary", "timestamp", "nchar", "nchar(36)", "nchar(54)", "nchar(72)", "nchar(164)" };
-
     void Awake()
     {
         Initialize();
@@ -120,12 +124,12 @@ public partial class TDBridge : MonoBehaviour
 #endif
             yield return login.SendWebRequest();
 #if UNITY_2020_1_OR_NEWER
-            if (login.result == UnityWebRequest.Result.ConnectionError || request.result == UnityWebRequest.Result.ProtocolError)
+            if (login.result == UnityWebRequest.Result.ConnectionError || login.result == UnityWebRequest.Result.ProtocolError)
 #else 
             if (login.isNetworkError || login.isHttpError)
 #endif
             {
-                Debug.LogError(login.error);
+                Debug.LogError("Log in failed! " + login.error);
                 yield break;
             }
             string json = login.downloadHandler.text;
@@ -183,10 +187,10 @@ public partial class TDBridge : MonoBehaviour
                 break;
         }
 #if UNITY_EDITOR        
-        Debug.Log("Logged in. Authorization Method: " + authorizationMethod + ", token:" + token + ", IP:" + ip +
-            "\n TD Bridge Initialized! This Message will not be sent in built.");
+        Debug.Log("TD Bridge Initialized!. Authorization Method: " + authorizationMethod + ", token:" + token + ", IP:" + ip +
+            "\n This Message will not be sent in built.");
 #else
-        Debug.Log("Logged in!");
+        Debug.Log("TD Bridge Initialized!");
 #endif 
 
     }
@@ -217,6 +221,16 @@ public partial class TDBridge : MonoBehaviour
     public static string ASCIIDecode(byte[] bArray) {
         return System.Text.Encoding.ASCII.GetString(bArray);
     }
+
+    //Edit mode coroutine supporter
+#if UNITY_EDITOR
+    public static void ConstantLoopUpdate()
+    {
+        if (!Application.isPlaying) {
+            UnityEditor.EditorApplication.QueuePlayerLoopUpdate();
+        }
+    }
+#endif
 }
 //For BINARY type in the database.
 [Serializable]

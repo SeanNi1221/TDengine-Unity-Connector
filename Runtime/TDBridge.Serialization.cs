@@ -72,11 +72,10 @@ public partial class TDBridge
         string sql = SQL.SetTag(obj, tag_name, db_name, tb_name);
         SendRequest(sql);
     }
-    public static IEnumerator SetTags(UnityEngine.Object obj, string db_name = null, string tb_name = null) {
-        List<string> sqls = SQL.SetTags(obj, db_name, tb_name);
+    public static IEnumerator SetTags(UnityEngine.Object obj, string db_name = null, string tb_name = null, params string[] tag_names) {
+        List<string> sqls = SQL.SetTags(obj, db_name, tb_name, tag_names);
         foreach (string sql in sqls) {
-            SendRequest(sql);
-            yield return new WaitForEndOfFrame();
+            yield return Request.Send(sql);
         }
     }
     public static IEnumerator AlterSTableOf<T>(string db_name = null, string stb_name = null) {
@@ -251,7 +250,78 @@ public partial class TDBridge
         }
         return list;
     }
+    public static Func<UnityEngine.Object, FieldInfo, int, string> serializeValue = (obj, field, textLength) => {
+    var fieldValue =  field.GetValue(obj);
+    if (fieldValue == null) return "NULL";
+    int typeIndex = TDBridge.varType.IndexOf(field.FieldType);
+    switch (typeIndex)
+    {
+        // default: return fieldValue.ToString();
+        // case 5: return ((System.Int64)fieldValue).ToString("R");
+        // case 6: return ((float)fieldValue).ToString("G9");
+        // case 7: return ((System.Double)fieldValue).ToString("G17");
+        // case 9: 
+        //     var dateTime = (System.DateTime)fieldValue;
+        //     return SQL.Quote( dateTime.ToString("yyyy-MM-dd HH:mm:ss.fff") );
+        // case 8: case 10:
+        //     string textValue = fieldValue.ToString();
+        //     if( textValue.Length > textLength) { Debug.LogWarning("Value overlength: " + textValue + ". operation can fail!"); }
+        //     return SQL.Quote(textValue);
+        // case 11:
+        //     return ((Vector2)fieldValue).ToString("G9");
+        // case 12:
+        //     return ((Vector3)fieldValue).ToString("G9");
+        // case 13:
+        //     return ((Quaternion)fieldValue).ToString("G9");
+        // case 14:
+        //     return SQL.Quote(serializeTransform(fieldValue as Transform));
+
+
+        default: return fieldValue.ToString();
+        case 5: return serializeInt64((System.Int64)fieldValue);
+        case 6: return serializeSingle((float)fieldValue);
+        case 7: return serializeDouble((System.Double)fieldValue);
+        case 8: return serializeBin((bin)fieldValue, textLength);
+        case 9: return serializeDateTime((System.DateTime)fieldValue);
+        case 10: return serializeBin((string)fieldValue, textLength);
+        case 11: return serializeVector2((Vector2)fieldValue);
+        case 12: return serializeVector3((Vector3)fieldValue);
+        case 13: return serializeQuaternion((Quaternion)fieldValue);
+        case 14: return serializeTransform(fieldValue as Transform);
+    }
+};
+    public static Func<bool, string> serializeBool = value => value.ToString();
+    public static Func<Byte, string> serializeByte = value => value.ToString();
+    public static Func<Int16, string> serializeInt16 = value => value.ToString();
+    public static Func<int, string> serializeInt = value => value.ToString();
+    public static Func<Int32, string> serializeInt32 = value => value.ToString();
+    public static Func<Int64, string> serializeInt64 = value => value.ToString("R");
+    public static Func<float, string> serializeFloat = value => value.ToString("G9");
+    public static Func<Single, string> serializeSingle = value => value.ToString("G9");
+    public static Func<Double, string> serializeDouble = value => value.ToString("G17");
+    public static Func<bin, int, string> serializeBin = (value, textLength) => { 
+        if (value.String.Length>textLength) Debug.LogWarning("Value overlength: " + value + ". operation can fail!"); 
+            return SQL.Quote(value);
+        };
+    public static Func<DateTime, string> serializeDateTime = value => SQL.Quote( value.ToString("yyyy-MM-dd HH:mm:ss.fff") );
+    public static Func<string, int, string> serializeString = (value, textLength) => { 
+        if (value.Length>textLength) Debug.LogWarning("Value overlength: " + value + ". operation can fail!"); 
+            return SQL.Quote(value);
+        };
+    public static Func<Vector2, string> serializeVector2 = value => value.ToString("G9");
+    public static Func<Vector3, string> serializeVector3 = value => value.ToString("G9");
+    public static Func<Quaternion, string> serializeQuaternion = value => value.ToString("G9");
+    public static Func<Transform, string> serializeTransform = value => {
+        if (!value) return string.Empty;
+        return SQL.Quote(value.localPosition.ToString("G9") + "," + value.localEulerAngles.ToString("G9") + "," + value.localScale.ToString("G9"));
+    };
+    // public static string SerializeTransform(Transform tr)
+    // {
+    //     if (!tr) return string.Empty;
+    //     return tr.localPosition.ToString("G9") + "," + tr.localEulerAngles.ToString("G9") + "," + tr.localScale.ToString("G9");
+    // }
 }
+
 [AttributeUsage(AttributeTargets.Field)]
 public class DataField : Attribute
 {    
