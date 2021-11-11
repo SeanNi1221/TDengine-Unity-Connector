@@ -19,15 +19,10 @@ public static class SQL
         string columnNames = ColumnNamesWithoutTS(obj);
         return action + columnNames + " FROM " + db_name + Dot + tb_name + option; 
     }
+    public static string GetFirstRowWithoutTS(TDChannel channel) {
+        return "SELECT " + ColumnNamesWithoutTS(channel) + " FROM " + channel.databaseName + Dot + channel.tableName + " LIMIT 1";
+    }
    // SELECT LAST_ROW(columnNames) FROM test.TH_Meter0001
-    // public static string GetLastRow(UnityEngine.Object obj, string columnNames = "*", bool withTags = false, string db_name = null, string tb_name = null) {
-    //     string action = "SELECT LAST_ROW";
-    //     db_name = SetDatabaseName(db_name);
-    //     tb_name = SetTableNameWith(obj, tb_name);
-    //     return withTags?
-    //         action + Bracket(columnNames) + "," + TagNames(obj, false) + " FROM " + db_name + Dot + tb_name :            
-    //         action + Bracket(columnNames) + " FROM " + db_name + Dot + tb_name; 
-    // }
     public static string GetLastRow(UnityEngine.Object obj, string fieldNames = "*", string tagNames = null, string db_name = null, string tb_name = null, bool allTags = false) {
         string action = "SELECT LAST_ROW";
         db_name = SetDatabaseName(db_name);
@@ -36,17 +31,31 @@ public static class SQL
             action + Bracket(fieldNames) + "," + TagNames(obj, false) + " FROM " + db_name + Dot + tb_name :            
             action + Bracket(fieldNames) + (string.IsNullOrEmpty(tagNames)? "" : ("," + tagNames)) + " FROM " + db_name + Dot + tb_name; 
     }
+    public static string GetLastRow(TDChannel channel, string fieldNames = "*", string tagNames = null, bool allTags = false) {
+        string action = "SELECT LAST_ROW";
+        string db_name = channel.databaseName;
+        string tb_name = db_name + Dot + channel.tableName;    
+        return allTags?
+            action + Bracket(fieldNames) + "," + TagNames(channel, false) + " FROM " + tb_name :            
+            action + Bracket(fieldNames) + (string.IsNullOrEmpty(tagNames)? "" : ("," + tagNames)) + " FROM " + tb_name; 
+    }
     // SELECT tag1_name, tag2_name FROM test.TH_Meter0001
     public static string GetTags(UnityEngine.Object obj, string db_name = null, string tb_name = null) {
         string action = "SELECT ";
         db_name = SetDatabaseName(db_name);
         tb_name = SetTableNameWith(obj, tb_name);
         return action + TagNames(obj, false) + " FROM " + db_name + Dot + tb_name;           
+    }
+    public static string GetTags(TDChannel channel) {
+        return "SELECT " + TagNames(channel, false) + " FROM " + channel.databaseName + Dot + channel.tableName;
     }  
     public static string CreateDatabase(string db_name = null, bool if_not_exists = true) {
         string action = if_not_exists? "CREATE DATABASE IF NOT EXISTS ":"CREATE DATABASE ";
         db_name = SetDatabaseName(db_name);
         return action + db_name;
+    }
+    public static string CreateDatabase(TDChannel channel) {
+        return "CREATE DATABASE IF NOT EXISTS " + channel.databaseName;
     }
     public static string CreateSTable<T>(string db_name = null, string stb_name = null, string timestamp_field_name = "ts", bool if_not_exists = true) {
         return CreateSTable(typeof(T), db_name, stb_name, timestamp_field_name, if_not_exists);
@@ -63,6 +72,14 @@ public static class SQL
         string sql = action + Quote(db_name) + Dot + Quote(stb_name) + fieldTypes + tagTypes;
         if(TDBridge.DetailedDebugLog) Debug.Log("SQL- CREATE STABLE from type " + type.Name);
         return sql;
+    }
+    public static string CreateSTable(TDChannel channel) {
+        string action = "CREATE STABLE IF NOT EXISTS ";
+        string db_name = channel.databaseName;
+        string stb_name = db_name + Dot + channel.superTableName;
+        string fieldTypes = FieldTypes(channel);
+        string tagTypes = TagTypes(channel);
+        return action + stb_name + fieldTypes + tagTypes;        
     }
     public static string CreateTable<T>(string db_name = null, string tb_name = null, string timestamp_field_name = "ts", bool if_not_exists = true) {
         string action = if_not_exists? "CREATE TABLE IF NOT EXISTS ":"CREATE TABLE ";
@@ -82,6 +99,13 @@ public static class SQL
         if(TDBridge.DetailedDebugLog) Debug.Log("SQL- CREATE TABLE from object " + obj.name);
         return sql;
     }
+    public static string CreateTable(TDChannel channel) {
+        string action = "CREATE TABLE IF NOT EXISTS ";
+        string db_name = channel.databaseName;
+        string tb_name = db_name + Dot + channel.tableName;
+        string fieldTypes = FieldTypes(channel);
+        return action + tb_name + fieldTypes;
+    }
     public static string CreateTableUsing(UnityEngine.Object obj, string db_name = null, string tb_name = null, string stb_name = null, bool if_not_exists = true) {
         string action = if_not_exists? "CREATE TABLE IF NOT EXISTS ":"CREATE TABLE ";
         db_name = SetDatabaseName(db_name);
@@ -93,7 +117,7 @@ public static class SQL
         return sql;            
     }
     public static string CreateTableUsing(UnityEngine.Object[] objects, string db_name = null, string[] tb_names = null, string stb_name = null, bool if_not_exists = true) {
-        string action = if_not_exists? " IF NOT EXISTS " : " ";            
+        string option = if_not_exists? " IF NOT EXISTS " : " ";            
         db_name = SetDatabaseName(db_name);
         string tables = null;
         if (tb_names == null) {
@@ -104,12 +128,24 @@ public static class SQL
             int index = System.Array.IndexOf(objects, obj);
             tb_names[index] = SetTableNameWith(obj, tb_names[index]);
             string currentTagValues = TagValues(obj);
-            string currentTable = action + Quote(db_name) + Dot + Quote(tb_names[index]) + " USING " + Quote(db_name) + Dot + Quote(stb_name) + currentTagValues + Space;
+            string currentTable = option + Quote(db_name) + Dot + Quote(tb_names[index]) + " USING " + Quote(db_name) + Dot + Quote(stb_name) + currentTagValues + Space;
             tables += currentTable;
         }
         string sql = "CREATE TABLE " + tables;
         if(TDBridge.DetailedDebugLog) Debug.Log("SQL- CREATE TABLE from " + objects.Length + " objects using"  + stb_name);
         return sql;
+    }
+    public static string CreateTableUsing(params TDChannel[] channels) {
+        string option = " IF NOT EXISTS ";            
+        string tables = null;
+        foreach (var channel in channels) {
+            string db_name = channel.databaseName;
+            string stb_name = db_name + Dot + channel.superTableName;
+            string tb_name = db_name + Dot + channel.tableName;
+            string tagValues = TagValues(channel);
+            tables += (option + tb_name + " USING " + stb_name + tagValues + Space);
+        }
+        return "CREATE TABLE " + tables;
     }
 //INSERT INTO d1001 VALUES (NOW, 10.2, 219, 0.32)
     public static string Insert(UnityEngine.Object obj, string db_name = null, string tb_name = null, string time = "NOW") {
@@ -130,6 +166,18 @@ public static class SQL
         }
         return action + string.Join(" ", tables);
     }
+    public static string Insert(params TDChannel[] channels) {
+        if (channels.Length < 1) {Debug.Log("No channel to insert, aborted!"); return string.Empty;}
+        string action = "INSERT INTO ";
+        List<string> tables = new List<string>();
+        foreach (var channel in channels) {
+            string db_name = channel.databaseName;
+            string tb_name = db_name + Dot + channel.tableName;
+            string fieldValues = FieldValues(channel);
+            tables.Add( tb_name + fieldValues);
+        }        
+        return action + string.Join(" ", tables);                        
+    }
     //INSERT INTO d1001 (ts, current, phase) VALUES ('2021-07-13 14:06:33.196', 10.27, 0.31)
     public static string InsertSpecific(UnityEngine.Object obj, string db_name = null, string tb_name = null, string timestamp_field_name = "ts", string time = "NOW") {
         string action = "INSERT INTO ";
@@ -148,6 +196,19 @@ public static class SQL
             tb_name[i] = SetTableNameWith(objects[i], tb_name[i]);
             tables.Add( db_name + Dot + tb_name[i] + Space + fieldNames + FieldValues(objects[i], time[i]) );
         }
+        return action + string.Join(" ", tables);                        
+    }
+    public static string InsertSpecific(params TDChannel[] channels) {
+        if (channels.Length < 1) {Debug.Log("No channel to insert, aborted!"); return string.Empty;}
+        string action = "INSERT INTO ";
+        List<string> tables = new List<string>();
+        foreach (var channel in channels) {
+            string db_name = channel.databaseName;
+            string tb_name = db_name + Dot + channel.tableName;
+            string fieldNames = FieldNames(channel);
+            string fieldValues = FieldValues(channel);
+            tables.Add( tb_name + Space + fieldNames + fieldValues);
+        }        
         return action + string.Join(" ", tables);                        
     }
 //INSERT INTO d21001 USING meters TAGS ('Beijing.Chaoyang', 2) VALUES ('2021-07-13 14:06:32.272', 10.2, 219, 0.32)
@@ -171,6 +232,21 @@ public static class SQL
         for (int i=0; i< objects.Length; i++) {
             tb_name[i] = db_name + Dot + SetTableNameWith(objects[i], tb_name[i]);
             tables.Add( tb_name[i] + operation + stb_name + TagValues(objects[i]) + Space + FieldValues(objects[i], time[i]) );
+        }
+        return action + string.Join(" ", tables);
+    }
+    public static string InsertUsing(params TDChannel[] channels) {
+        if (channels.Length < 1) {Debug.Log("No channel to insert, aborted!"); return string.Empty;}
+        string action = "INSERT INTO ";
+        string operation = " USING ";
+        List<string> tables = new List<string>();
+        foreach (var channel in channels) {
+            string db_name = channel.databaseName;
+            string stb_name = db_name + Dot + channel.superTableName;
+            string tb_name = db_name + Dot + channel.tableName;
+            string tagValues = TagValues(channel);
+            string fieldValues = FieldValues(channel);
+            tables.Add( tb_name + operation + stb_name + tagValues + Space + fieldValues);
         }
         return action + string.Join(" ", tables);
     }
@@ -200,6 +276,23 @@ public static class SQL
         }
         return action + string.Join(" ", tables);
     }
+    public static string InsertSpecificUsing(params TDChannel[] channels) {
+        if (channels.Length < 1) {Debug.Log("No channel to insert, aborted!"); return string.Empty;}
+        string action = "INSERT INTO ";
+        string operation = " USING ";
+        List<string> tables = new List<string>();
+        foreach (var channel in channels) {
+            string db_name = channel.databaseName;
+            string stb_name = db_name + Dot + channel.superTableName;
+            string tb_name = db_name + Dot + channel.tableName;
+            string tagNames = TagNames(channel);
+            string tagValues = TagValues(channel);
+            string fieldNames = FieldNames(channel);
+            string fieldValues = FieldValues(channel);
+            tables.Add( tb_name + operation + stb_name + Space + tagNames + tagValues + Space + fieldNames + fieldValues);
+        }
+        return action + string.Join(" ", tables);
+    }
     static Func< UnityEngine.Object[], string[], string[], (List<string>, List<string>) > multiTableInit = (objects, _tb_name, _time) => {
         List<string> tb_name = _tb_name == null? new List<string>{ SetTableNameWith(objects[0]) } : new List<string>(_tb_name);
         List<string> time = _time == null? new List<string>{ "NOW" } : new List<string>(_time);
@@ -216,6 +309,29 @@ public static class SQL
         return (tb_name, time);            
     };
 //ALTER TABLE tb_name SET TAG tag1_name=new_tag1_value; ALTER TABLE tb_name SET TAG tag2_name=new_tag2_value;
+    // public static List<string> SetTags(TDChannel channel) {
+    //     if (channel.tags.Count < 1) { if(TDBridge.DetailedDebugLog) Debug.Log("No tag to set, aborted."); return new List<string>(); }
+    //     List<string> sqls = new List<string>(); 
+    //     foreach (string tag_name in channel.tags.Keys) {
+    //         sqls.Add(SetTag(channel.target, tag_name, channel.databaseName, channel.tableName));
+    //     }
+    //     return sqls;
+    // }
+    public static List<string> SetTags(TDChannel channel, params string[] tag_names) {
+        if (channel.tags.Count < 1) { if(TDBridge.DetailedDebugLog) Debug.Log("No tag to set, aborted."); return new List<string>(); }
+        List<string> sqls = new List<string>();
+        if (tag_names.Length < 1 || tag_names == null) {
+            foreach (string tag_name in channel.tags.Keys) {
+                sqls.Add(SetTag(channel, tag_name));
+            }
+        }
+        else {
+            foreach (string tag_name in tag_names) {
+                sqls.Add(SetTag(channel, tag_name));
+            }            
+        }
+        return sqls;
+    }
     public static List<string> SetTags(UnityEngine.Object obj, string db_name = null, string tb_name = null, params string[] tag_names) {
         string action  = "ALTER TABLE ";
         string operation = " SET TAG ";
@@ -226,7 +342,7 @@ public static class SQL
             foreach (var field in obj.GetType().GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)) {
                 DataTag dt = Attribute.GetCustomAttribute(field, typeof(DataTag)) as DataTag;
                 if (dt == null) continue;
-                string new_tag_value = TDBridge.serializeValue(obj, field, dt.length);                                       
+                string new_tag_value = TDBridge.serializeValue(obj, field, TDBridge.varType.IndexOf(field.FieldType), dt.length);                                       
                 sqls.Add(action + db_name + Dot + tb_name + operation + field.Name + "=" + new_tag_value);
             }
         }
@@ -238,25 +354,36 @@ public static class SQL
         return sqls;
     }
 // //ALTER TABLE tb_name SET TAG tag_name=new_tag_value;
+    public static string SetTag(TDChannel channel, string tag_name) {
+        string action  = "ALTER TABLE ";
+        string operation = " SET TAG ";
+        
+        var tag = channel.tags[tag_name]; 
+        if (tag == null) { if(TDBridge.DetailedDebugLog) Debug.LogError("Cannot find tag " + tag_name ); return string.Empty;}
+        int typeIndex = channel.types[tag_name];
+        int length = channel.lengths[tag_name];
+        string new_tag_value = TDBridge.serializeValue(channel.target, tag, typeIndex, length);
+        return action + channel.databaseName + Dot + channel.tableName + operation + tag_name + "=" + new_tag_value;
+    }
     public static string SetTag(UnityEngine.Object obj, string tag_name, string db_name = null, string tb_name = null) {
         string action  = "ALTER TABLE ";
         string operation = " SET TAG ";
         string new_tag_value = null;
         db_name = SQL.SetDatabaseName(db_name);
         tb_name = SQL.SetTableNameWith(obj);            
-        // foreach (var field in obj.GetType().GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)) {
-        //     DataTag dt = Attribute.GetCustomAttribute(field, typeof(DataTag)) as DataTag;
-        //     if (dt != null && field.Name.Equals(StringComparison.InvariantCultureIgnoreCase)) {
-        //         new_tag_value = TDBridge.serializeValue(obj, field, dt.length);                                       
-        //     }
-        // }
         var field = obj.GetType().GetField(tag_name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.IgnoreCase); 
         if (field == null) { Debug.LogError("Cannot find field " + tag_name + " in object " + obj.name); return string.Empty;}
         DataTag dt = Attribute.GetCustomAttribute(field, typeof(DataTag)) as DataTag;
         if (dt == null) {Debug.LogError("Field " + tag_name + " is not a Tag, please add [DataTag] attribute first!"); return string.Empty;}
-        new_tag_value = TDBridge.serializeValue(obj, field, dt.length);
+        new_tag_value = TDBridge.serializeValue(obj, field, TDBridge.varType.IndexOf(field.FieldType), dt.length);
         return action + db_name + Dot + tb_name + operation + tag_name + "=" + new_tag_value;
     }
+    public static string FieldNames(TDChannel channel, bool withBracket = true ) {
+        string names = string.Join(", ", channel.fields.Keys);
+        string allNames = channel.timeStampName + ", " + names;
+        return withBracket? Bracket(allNames) : allNames;
+    }
+
     public static string FieldNames(UnityEngine.Object obj, string timestamp_field_name = "ts", bool withBracket = true) {
         return FieldNames( obj.GetType(), timestamp_field_name, withBracket);
     }
@@ -273,6 +400,14 @@ public static class SQL
             }
         }
         string names = string.Join(", ", fieldNames);
+        return withBracket? Bracket(names) : names;
+    }
+    public static string ColumnNamesWithoutTS(TDChannel channel, bool withBracket = false) {
+        var columns = (ICollection<string>)channel.tags.Keys;
+        foreach(var key in channel.fields.Keys) {
+            columns.Add(key);
+        }
+        string names = string.Join(", ", columns );
         return withBracket? Bracket(names) : names;
     }
     public static string ColumnNamesWithoutTS(UnityEngine.Object obj,  bool withBracket = false) {
@@ -294,6 +429,10 @@ public static class SQL
         string names = string.Join(", ", columnNames);
         return withBracket? Bracket(names) : names;
     }
+    public static string TagNames(TDChannel channel, bool withBracket = true) {
+        string names = string.Join(", ", channel.tags.Keys);
+        return withBracket? Bracket( names ) : names;
+    }
     public static string TagNames(UnityEngine.Object obj, bool withBracket = true) {
         return TagNames(obj.GetType(), withBracket);
     }
@@ -311,6 +450,28 @@ public static class SQL
         }
         string names = string.Join(", ", tagNames);
         return withBracket? Bracket( names ) : names;
+    }
+    public static string FieldTypes(TDChannel channel) {
+        List<string> fieldTypes = new List<string>{ "'" + channel.timeStampName + "'" + " TIMESTAMP" };
+        foreach (KeyValuePair<string, FieldInfo> pair in channel.fields ) {
+            string key = pair.Key;
+            int typeIndex = channel.types[key];
+            switch (typeIndex) {
+                default: break;
+                case 0: 
+                    Debug.LogWarning("Field Type '" + TDBridge.varType[typeIndex].Name + "' is not supported, value will be force converted to nchar(100)!");
+                    break;
+                case -1:
+                    Debug.LogError("Field Type '" + TDBridge.varType[typeIndex].Name + "' is not supported!");
+                    break;
+            }
+            string typeOfThis = " '" + key + "' " + TDBridge.dataType[typeIndex];
+            if (isTextData(typeIndex)) {
+                typeOfThis += Bracket( channel.lengths[key].ToString() );
+            }
+            fieldTypes.Add(typeOfThis);
+        }
+        return " (" + string.Join("," , fieldTypes) + ") ";
     }
     public static string FieldTypes<T>(string timestamp_field_name = "ts") {
         return FieldTypes(typeof(T), timestamp_field_name);
@@ -343,6 +504,28 @@ public static class SQL
             }
         }
         return " (" + string.Join("," , fieldTypes) + ") ";
+    }
+    public static string TagTypes(TDChannel channel) {
+        List<string> tagTypes = new List<string>();
+        foreach (KeyValuePair<string, FieldInfo> pair in channel.tags ) {
+            string key = pair.Key;
+            int typeIndex = channel.types[key];
+            switch (typeIndex) {
+                default: break;
+                case 0: 
+                    Debug.LogWarning("Field Type '" + TDBridge.varType[typeIndex].Name + "' is not supported, value will be force converted to nchar(100)!");
+                    break;
+                case -1:
+                    Debug.LogError("Field Type '" + TDBridge.varType[typeIndex].Name + "' is not supported!");
+                    break;
+            }
+            string typeOfThis = " '" + key + "' " + TDBridge.dataType[typeIndex];
+            if (isTextData(typeIndex)) {
+                typeOfThis += Bracket( channel.lengths[key].ToString() );
+            }
+            tagTypes.Add(typeOfThis);
+        }
+        return " TAGS" + Bracket( string.Join("," , tagTypes) );        
     }
     public static string TagTypes<T>() {
         return TagTypes(typeof(T));
@@ -384,24 +567,42 @@ public static class SQL
         else return typeOfThis;
     };
 //VALUES (NOW, 10.2, 219, 0.32)
+    public static string FieldValues(TDChannel channel) {
+        List<string> fieldValues = new List<string>{channel.dataTime};
+        foreach (KeyValuePair<string, FieldInfo> pair in channel.fields) {
+            string key = pair.Key;
+            string value = TDBridge.serializeValue(channel.target, pair.Value, channel.types[key], channel.lengths[key]);
+            fieldValues.Add(value);
+        }
+        return " VALUES" + Bracket( string.Join(", " , fieldValues) );            
+    }
     public static string FieldValues(UnityEngine.Object obj, string timestamp = "NOW") {
         List<string> fieldValues = new List<string>{timestamp};
         foreach (var field in obj.GetType().GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)) {
             DataField df = Attribute.GetCustomAttribute(field, typeof(DataField)) as DataField;
             if (df != null) {
-                string value = TDBridge.serializeValue(obj, field, df.length);                  
+                string value = TDBridge.serializeValue(obj, field, TDBridge.varType.IndexOf(field.FieldType), df.length);                  
                 fieldValues.Add(value);
             }
         }
         return " VALUES" + Bracket( string.Join(", " , fieldValues) );            
     }
 //TAGS (tag_value1, ...)
+    public static string TagValues(TDChannel channel) {
+        List<string> tagValues = new List<string>();
+        foreach (KeyValuePair<string, FieldInfo> pair in channel.tags) {
+            string key = pair.Key;
+            string value = TDBridge.serializeValue(channel.target, pair.Value, channel.types[key], channel.lengths[key]);
+            tagValues.Add(value);
+        }    
+        return " TAGS" + Bracket( string.Join(", " , tagValues) );
+    }
     public static string TagValues(UnityEngine.Object obj) {
         List<string> tagValues = new List<string>();
         foreach (var field in obj.GetType().GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)) {
             DataTag dt = Attribute.GetCustomAttribute(field, typeof(DataTag)) as DataTag;
             if (dt != null) {
-                string value = TDBridge.serializeValue(obj, field, dt.length);                                       
+                string value = TDBridge.serializeValue(obj, field, TDBridge.varType.IndexOf(field.FieldType), dt.length);                                       
                 tagValues.Add(value);
             }
         }

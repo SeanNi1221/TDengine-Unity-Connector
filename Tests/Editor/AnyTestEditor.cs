@@ -10,8 +10,11 @@ public class AnyTestEditor : Editor
     {
         DrawDefaultInspector();
         AnyTest t = (AnyTest)target;
-        if (GUILayout.Button("Run Test")) {
-            t.RunTest();
+        if (GUILayout.Button("Run Test 1")) {
+            t.RunTest1();
+        }
+        if (GUILayout.Button("Run Test 2")) {
+            t.RunTest2();
         }
     }
 }

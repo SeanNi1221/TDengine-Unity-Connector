@@ -5,6 +5,28 @@ using System;
 using System.Reflection;
 namespace Sean21.TDengineConnector
 {
+[AttributeUsage(AttributeTargets.Field)]
+public class DataField : Attribute
+{    
+    public int length; 
+    public DataField(int l) {
+        this.length = l <=0  ? TDBridge.DefaultTextLength : l;
+    }
+    public DataField() {
+        this.length = TDBridge.DefaultTextLength;
+    }
+}
+[AttributeUsage(AttributeTargets.Field)]
+public class DataTag : Attribute
+{
+    public int length; 
+    public DataTag(int l) {
+        this.length = l <=0  ? TDBridge.DefaultTextLength : l;
+    }
+    public DataTag() {
+        this.length = TDBridge.DefaultTextLength;
+    }    
+}
 public partial class TDBridge
 {
     const string Dot = ".";
@@ -12,12 +34,19 @@ public partial class TDBridge
     public static void CreateDatabase(string db_name = null, bool if_not_exists = true) {
         SendRequest(SQL.CreateDatabase(db_name, if_not_exists));
     }
+    public static void CreateDatabase(TDChannel channel) {
+        SendRequest(SQL.CreateDatabase(channel));
+    }
     public static void CreateSTable<T>(string db_name = null, string stb_name = null, string timestamp_field_name = "ts", bool if_not_exists = true) {
         string sql = SQL.CreateSTable<T>(db_name, stb_name, timestamp_field_name, if_not_exists);
         SendRequest(sql);
     }
     public static void CreateSTable(UnityEngine.Object obj, string db_name = null, string stb_name = null, string timestamp_field_name = "ts", bool if_not_exists = true) {
         string sql = SQL.CreateSTable(obj, db_name, stb_name, timestamp_field_name, if_not_exists);
+        SendRequest(sql);
+    }
+    public static void CreateSTable(TDChannel channel) {
+        string sql = SQL.CreateSTable(channel);
         SendRequest(sql);
     }
     public static void CreateTable<T>(string db_name = null, string tb_name = null, string timestamp_field_name = "ts", bool if_not_exists = true) {
@@ -28,12 +57,20 @@ public partial class TDBridge
         string sql = SQL.CreateTable(obj, db_name, tb_name, timestamp_field_name, if_not_exists);
         SendRequest(sql);
     }
+    public static void CreateTable(TDChannel channel) {
+        string sql = SQL.CreateTable(channel);
+        SendRequest(sql);
+    }
     public static void CreateTableUsing(UnityEngine.Object obj, string db_name = null, string tb_name = null, string stb_name = null, bool if_not_exists = true) {
         string sql = SQL.CreateTableUsing(obj, db_name, tb_name, stb_name, if_not_exists);
         SendRequest(sql);
     }
     public static void CreateTableUsing(UnityEngine.Object[] objects, string db_name = null, string[] tb_names = null, string stb_name = null, bool if_not_exists = true) {
         string sql = SQL.CreateTableUsing(objects, db_name, tb_names, stb_name, if_not_exists);
+        SendRequest(sql);
+    }
+    public static void CreateTableUsing(params TDChannel[] channels) {
+        string sql = SQL.CreateTableUsing(channels);
         SendRequest(sql);
     }
     public static void Insert(UnityEngine.Object obj, string db_name = null, string tb_name = null, string time = "NOW") {
@@ -44,12 +81,20 @@ public partial class TDBridge
         string sql = SQL.Insert(objects, db_name,_tb_name, _time);
         SendRequest(sql);
     }
+    public static void Insert(params TDChannel[] channels) {
+        string sql = SQL.Insert(channels);
+        SendRequest(sql);
+    }
     public static void InsertSpecific(UnityEngine.Object obj, string db_name = null, string tb_name = null,string timestamp_field_name = "ts", string time = "NOW") {
         string sql = SQL.InsertSpecific(obj, db_name, tb_name, timestamp_field_name, time);
         SendRequest(sql);
     }
     public static void InsertSpecific(UnityEngine.Object[] objects, string db_name = null, string[] _tb_name = null, string timestamp_field_name = "ts", string[] _time = null) {
         string sql = SQL.InsertSpecific(objects, db_name, _tb_name, timestamp_field_name, _time);
+        SendRequest(sql);
+    }
+    public static void InsertSpecific(params TDChannel[] channels) {
+        string sql = SQL.InsertSpecific(channels);
         SendRequest(sql);
     }
     public static void InsertUsing(UnityEngine.Object obj, string db_name = null, string stb_name = null, string tb_name = null, string time = "NOW") {
@@ -60,6 +105,10 @@ public partial class TDBridge
         string sql = SQL.InsertUsing(objects, db_name, stb_name, _tb_name, _time);
         SendRequest(sql);
     }
+    public static void InsertUsing(params TDChannel[] channels) {
+        string sql = SQL.InsertUsing(channels);
+        SendRequest(sql);
+    }
     public static void InsertSpecificUsing(UnityEngine.Object obj, string db_name = null, string stb_name = null, string tb_name = null, string time = "NOW") {
         string sql = SQL.InsertSpecificUsing(obj, db_name, stb_name, tb_name, time);
         SendRequest(sql);
@@ -68,14 +117,28 @@ public partial class TDBridge
         string sql = SQL.InsertSpecificUsing(objects, db_name, stb_name, _tb_name, timestamp_field_name, _time);
         SendRequest(sql);
     }
+    public static void InsertSpecificUsing(params TDChannel[] channels) {
+        string sql = SQL.InsertSpecificUsing(channels);
+        SendRequest(sql);
+    }
     public static void SetTag(UnityEngine.Object obj, string tag_name, string db_name = null, string tb_name = null) {
         string sql = SQL.SetTag(obj, tag_name, db_name, tb_name);
         SendRequest(sql);
+    }
+    public static void SetTag(TDChannel channel, string tag_name) {
+        string sql = SQL.SetTag(channel, tag_name);
+        channel.SendRequest(sql);
     }
     public static IEnumerator SetTags(UnityEngine.Object obj, string db_name = null, string tb_name = null, params string[] tag_names) {
         List<string> sqls = SQL.SetTags(obj, db_name, tb_name, tag_names);
         foreach (string sql in sqls) {
             yield return Request.Send(sql);
+        }
+    }
+    public static IEnumerator SetTags(TDChannel channel, params string[] tag_names) {
+        List<string> sqls = SQL.SetTags(channel, tag_names);
+        foreach (string sql in sqls) {
+            yield return channel.request.Send(sql);
         }
     }
     public static IEnumerator AlterSTableOf<T>(string db_name = null, string stb_name = null) {
@@ -108,6 +171,28 @@ public partial class TDBridge
         yield return AlterColumns(currentTagsMeta, newTagsMeta,db_name, stb_name, action, true);
         if(TDBridge.i.detailedDebugLog) Debug.Log("Altering ---TAGS--- of " + stb_name + " finished.");
     }
+    public static IEnumerator AlterSTableOf(TDChannel channel) {
+        string db_name = channel.databaseName;
+        string stb_name = channel.superTableName;
+        string action = "ALTER STABLE ";
+//Aqcuire table structure
+    //fields
+        yield return channel.request.Send("SELECT FIRST(*) FROM " + db_name + Dot + stb_name);
+        List<TDResult.ColumnMeta> currentMeta = channel.request.result.column_meta;
+        List<TDResult.ColumnMeta> newMeta = FieldMetasOf(channel);
+    //tags
+        channel.request.sql = "SELECT * FROM " + db_name + Dot + stb_name + " LIMIT 1";
+        yield return channel.request.Send();
+        channel.request.result.column_meta.RemoveRange(0, currentMeta.Count);
+        List<TDResult.ColumnMeta> currentTagsMeta = channel.request.result.column_meta;
+        List<TDResult.ColumnMeta> newTagsMeta = TagMetasOf(channel);
+//Take action for fields
+        yield return AlterColumns(currentMeta, newMeta,db_name, stb_name, action);
+        if(TDBridge.i.detailedDebugLog) Debug.Log("Altering ---FIELDS--- of " + stb_name + " finished.");
+//Take action for tags
+        yield return AlterColumns(currentTagsMeta, newTagsMeta,db_name, stb_name, action, true);
+        if(TDBridge.i.detailedDebugLog) Debug.Log("Altering ---TAGS--- of " + stb_name + " finished.");
+    }
     public static IEnumerator AlterTableOf<T>(string db_name = null, string tb_name = null) {
         tb_name = SQL.SetTableNameWith<T>(tb_name);
         yield return AlterTableOf(typeof(T), db_name, tb_name);
@@ -128,6 +213,19 @@ public partial class TDBridge
         yield return AlterColumns(currentMeta, newMeta,db_name, tb_name, action);
         Debug.Log("Altering table " + tb_name + " finished.");
     }
+    public static IEnumerator AlterTableOf(TDChannel channel) {
+        string db_name = channel.databaseName;
+        string tb_name = db_name + Dot + channel.tableName;
+        string action = "ALTER TABLE ";
+//Aqcuire table structure
+        yield return channel.request.Send("SELECT FIRST(*) FROM " + tb_name);
+        List<TDResult.ColumnMeta> currentMeta = channel.request.result.column_meta;
+        List<TDResult.ColumnMeta> newMeta = FieldMetasOf(channel);
+//Take action
+        yield return AlterColumns(currentMeta, newMeta,db_name, tb_name, action);
+        Debug.Log("Altering table " + tb_name + " finished.");
+    }
+
     static IEnumerator AlterColumns(List<TDResult.ColumnMeta> currentMeta, List<TDResult.ColumnMeta> newMeta, string db_name, string tb_name, string action, bool forTags = false) {
 //Prepare SQL snippets
         string add = " ADD COLUMN ";
@@ -233,6 +331,15 @@ public partial class TDBridge
         }
         return list;
     }
+    public static List<TDResult.ColumnMeta> FieldMetasOf(TDChannel channel) {
+        List<TDResult.ColumnMeta> list = new List<TDResult.ColumnMeta>();
+        foreach (KeyValuePair<string, FieldInfo> pair in channel.fields) {
+            string key = pair.Key;
+            TDResult.ColumnMeta current = new TDResult.ColumnMeta(key, channel.types[key], channel.lengths[key]);
+            list.Add(current);
+        }
+        return list;        
+    }
     public static List<TDResult.ColumnMeta> TagMetasOf<T>() {
         return TagMetasOf( typeof(T) );
     }
@@ -250,46 +357,53 @@ public partial class TDBridge
         }
         return list;
     }
-    public static Func<UnityEngine.Object, FieldInfo, int, string> serializeValue = (obj, field, textLength) => {
-    var fieldValue =  field.GetValue(obj);
-    if (fieldValue == null) return "NULL";
-    int typeIndex = TDBridge.varType.IndexOf(field.FieldType);
-    switch (typeIndex)
-    {
-        // default: return fieldValue.ToString();
-        // case 5: return ((System.Int64)fieldValue).ToString("R");
-        // case 6: return ((float)fieldValue).ToString("G9");
-        // case 7: return ((System.Double)fieldValue).ToString("G17");
-        // case 9: 
-        //     var dateTime = (System.DateTime)fieldValue;
-        //     return SQL.Quote( dateTime.ToString("yyyy-MM-dd HH:mm:ss.fff") );
-        // case 8: case 10:
-        //     string textValue = fieldValue.ToString();
-        //     if( textValue.Length > textLength) { Debug.LogWarning("Value overlength: " + textValue + ". operation can fail!"); }
-        //     return SQL.Quote(textValue);
-        // case 11:
-        //     return ((Vector2)fieldValue).ToString("G9");
-        // case 12:
-        //     return ((Vector3)fieldValue).ToString("G9");
-        // case 13:
-        //     return ((Quaternion)fieldValue).ToString("G9");
-        // case 14:
-        //     return SQL.Quote(serializeTransform(fieldValue as Transform));
-
-
-        default: return fieldValue.ToString();
-        case 5: return serializeInt64((System.Int64)fieldValue);
-        case 6: return serializeSingle((float)fieldValue);
-        case 7: return serializeDouble((System.Double)fieldValue);
-        case 8: return serializeBin((bin)fieldValue, textLength);
-        case 9: return serializeDateTime((System.DateTime)fieldValue);
-        case 10: return serializeBin((string)fieldValue, textLength);
-        case 11: return serializeVector2((Vector2)fieldValue);
-        case 12: return serializeVector3((Vector3)fieldValue);
-        case 13: return serializeQuaternion((Quaternion)fieldValue);
-        case 14: return serializeTransform(fieldValue as Transform);
+    public static List<TDResult.ColumnMeta> TagMetasOf(TDChannel channel) {
+        List<TDResult.ColumnMeta> list = new List<TDResult.ColumnMeta>();
+        foreach (KeyValuePair<string, FieldInfo> pair in channel.tags) {
+            string key = pair.Key;
+            TDResult.ColumnMeta current = new TDResult.ColumnMeta(key, channel.types[key], channel.lengths[key]);
+            list.Add(current);
+        }
+        return list;        
     }
-};
+    // public static Func<object, FieldInfo, string> serializeValue = (obj, field) => {
+    //     var fieldValue =  field.GetValue(obj);
+    //     if (fieldValue == null) return "NULL";
+    //     int typeIndex = TDBridge.varType.IndexOf(field.FieldType);
+    //     switch (typeIndex)
+    //     {
+    //         default: return fieldValue.ToString();
+    //         case 5: return serializeInt64((System.Int64)fieldValue);
+    //         case 6: return serializeSingle((float)fieldValue);
+    //         case 7: return serializeDouble((System.Double)fieldValue);
+    //         case 8: return serializeBin((bin)fieldValue);
+    //         case 9: return serializeDateTime((System.DateTime)fieldValue);
+    //         case 10: return serializeString((string)fieldValue);
+    //         case 11: return serializeVector2((Vector2)fieldValue);
+    //         case 12: return serializeVector3((Vector3)fieldValue);
+    //         case 13: return serializeQuaternion((Quaternion)fieldValue);
+    //         case 14: return serializeTransform(fieldValue as Transform);
+    //     }        
+    // };
+    public static Func<UnityEngine.Object, FieldInfo, int, int?, string> serializeValue = (obj, field, typeIndex, textLength) => {
+        var fieldValue =  field.GetValue(obj);
+        if (fieldValue == null) return "NULL";
+        // int typeIndex = TDBridge.varType.IndexOf(field.FieldType);
+        switch (typeIndex)
+        {
+            default: return fieldValue.ToString();
+            case 5: return serializeInt64((System.Int64)fieldValue);
+            case 6: return serializeSingle((float)fieldValue);
+            case 7: return serializeDouble((System.Double)fieldValue);
+            case 8: return serializeBin((bin)fieldValue, textLength);
+            case 9: return serializeDateTime((System.DateTime)fieldValue);
+            case 10: return serializeString((string)fieldValue, textLength);
+            case 11: return serializeVector2((Vector2)fieldValue);
+            case 12: return serializeVector3((Vector3)fieldValue);
+            case 13: return serializeQuaternion((Quaternion)fieldValue);
+            case 14: return serializeTransform(fieldValue as Transform);
+        }
+    };
     public static Func<bool, string> serializeBool = value => value.ToString();
     public static Func<Byte, string> serializeByte = value => value.ToString();
     public static Func<Int16, string> serializeInt16 = value => value.ToString();
@@ -299,15 +413,19 @@ public partial class TDBridge
     public static Func<float, string> serializeFloat = value => value.ToString("G9");
     public static Func<Single, string> serializeSingle = value => value.ToString("G9");
     public static Func<Double, string> serializeDouble = value => value.ToString("G17");
-    public static Func<bin, int, string> serializeBin = (value, textLength) => { 
-        if (value.String.Length>textLength) Debug.LogWarning("Value overlength: " + value + ". operation can fail!"); 
-            return SQL.Quote(value);
-        };
+    // public static Func<bin, string> serializeBin = value => SQL.Quote(value);
+    public static Func<bin, int?, string> serializeBin = (value, textLength) => { 
+        if (textLength != null)
+            if (value.String.Length>textLength) Debug.LogWarning("Value overlength: " + value + ". operation can fail!"); 
+        return SQL.Quote(value);
+    };
     public static Func<DateTime, string> serializeDateTime = value => SQL.Quote( value.ToString("yyyy-MM-dd HH:mm:ss.fff") );
-    public static Func<string, int, string> serializeString = (value, textLength) => { 
-        if (value.Length>textLength) Debug.LogWarning("Value overlength: " + value + ". operation can fail!"); 
-            return SQL.Quote(value);
-        };
+    // public static Func<string, string> serializeString = value => SQL.Quote(value);
+    public static Func<string, int?, string> serializeString = (value, textLength) => { 
+        if (textLength != null)
+            if (value.Length>textLength) Debug.LogWarning("Value overlength: " + value + ". operation can fail!"); 
+        return SQL.Quote(value);
+    };
     public static Func<Vector2, string> serializeVector2 = value => value.ToString("G9");
     public static Func<Vector3, string> serializeVector3 = value => value.ToString("G9");
     public static Func<Quaternion, string> serializeQuaternion = value => value.ToString("G9");
@@ -315,34 +433,6 @@ public partial class TDBridge
         if (!value) return string.Empty;
         return SQL.Quote(value.localPosition.ToString("G9") + "," + value.localEulerAngles.ToString("G9") + "," + value.localScale.ToString("G9"));
     };
-    // public static string SerializeTransform(Transform tr)
-    // {
-    //     if (!tr) return string.Empty;
-    //     return tr.localPosition.ToString("G9") + "," + tr.localEulerAngles.ToString("G9") + "," + tr.localScale.ToString("G9");
-    // }
-}
-
-[AttributeUsage(AttributeTargets.Field)]
-public class DataField : Attribute
-{    
-    public int length; 
-    public DataField(int l) {
-        this.length = l <=0  ? TDBridge.DefaultTextLength : l;
-    }
-    public DataField() {
-        this.length = TDBridge.DefaultTextLength;
-    }
-}
-[AttributeUsage(AttributeTargets.Field)]
-public class DataTag : Attribute
-{
-    public int length; 
-    public DataTag(int l) {
-        this.length = l <=0  ? TDBridge.DefaultTextLength : l;
-    }
-    public DataTag() {
-        this.length = TDBridge.DefaultTextLength;
-    }    
 }
 }
 

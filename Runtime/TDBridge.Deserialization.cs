@@ -35,18 +35,41 @@ public partial class TDBridge
                 continue;
             }
             if(TDBridge.i.detailedDebugLog) Debug.Log("Got " + SQL.Quote(field.Name));
-            object fieldValue = field.GetValue(obj);
-            field.SetValue( obj, deserializeValue(result.data[row].value[i], fieldValue));
+            SetValueByString( obj, field, result.data[row].value[i]);
         }
-        Debug.Log("Deserializeing done.");
+        Debug.Log("Deserialization done.");
         return obj;        
     }
-    public static Func<string, object, object> deserializeValue = (data, fieldValue) => {
-        Type fieldType = fieldValue.GetType();
-        switch ( varType.IndexOf(fieldType))
+    public static object FromTD(TDChannel channel, TDResult result, int row = 0, bool skipSearchFields = false ) {
+        Debug.Log("Deserializing object: " + channel.target.name);
+        for (int i= 0;i < result.column_meta.Count; i++) {
+            TDResult.ColumnMeta col = result.column_meta[i];            
+            if (col.typeIndex == 9) if(TDBridge.DetailedDebugLog) Debug.Log("TIMESTAMP:" + result.data[row].value[i]);
+            FieldInfo field = null;
+            if (skipSearchFields) goto searchTags;
+            if ( channel.fields.TryGetValue(col.name, out field) ) goto set;
+            searchTags:
+            if ( channel.tags.TryGetValue(col.name, out field) ) goto set;
+            //Field not found:
+            if(TDBridge.DetailedDebugLog) Debug.Log(SQL.Quote(col.name) + " doesn't exist in target object.");
+            continue;
+            set:
+            if(TDBridge.DetailedDebugLog) Debug.Log("Got " + SQL.Quote(field.Name));
+            SetValueByString( channel.target, field, result.data[row].value[i] );
+            continue;
+        }
+        Debug.Log("Deserialization done.");
+        return channel.target;
+    }
+    public static void SetValueByString(object obj, FieldInfo field, string data, int? typeIndex = null) {
+        field.SetValue( obj, DeserializeValue(data, field, obj) );
+    }
+    public static object DeserializeValue(string data, FieldInfo field, object owner = null, int? typeIndex = null) {
+        if (typeIndex == null) typeIndex = varType.IndexOf(field.FieldType);
+        switch ( typeIndex )
         {            
             default: {
-                Debug.LogError("Unsupported type: " + fieldType.Name + ". Deserialization failed!");
+                Debug.LogError("Unsupported type: " + field.FieldType + ". Deserialization failed!");
                 return data;
             }
             case 1: return deserializeBool(data);
@@ -62,9 +85,11 @@ public partial class TDBridge
             case 11: return deserializeVector2(data);
             case 12: return deserializeVector3(data);
             case 13: return deserializeQuaternion(data);
-            case 14: return deserializeTransform(data, fieldValue as Transform);
+            case 14: 
+                if (owner == null) { Debug.LogError("Cannot Deserialize Transform without an field owner!"); return null; }
+                return deserializeTransform(data, ((field.GetValue(owner)) as Transform) );
         }
-    };
+    }
     public static Func<string, bool> deserializeBool = data => data == "1" || data =="true";
     public static Func<string, Byte> deserializeByte = data => Byte.Parse(data);
     public static Func<string, Int16> deserializeInt16 = data => Int16.Parse(data);

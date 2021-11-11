@@ -51,6 +51,14 @@ public partial class TDBridge
             }
             r.data.Add(currentRow);
         }
+        
+        //To solve the last/first prefix problem caused by the keepColumnName parameter in the server config file
+        if (r.column_meta.Count == 1){
+            var meta = r.column_meta[0];
+            meta.name = Process(ref meta.name, "(", ")");
+            r.column_meta[0] = meta;
+        }
+
         return r;
     }
     public static TDResult.LoginResult ParseLogin(string json)
