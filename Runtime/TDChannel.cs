@@ -63,10 +63,10 @@ public class TDChannel : MonoBehaviour
         if (!string.IsNullOrEmpty(TDBridge.DefaultDatabaseName)) databaseName = TDBridge.DefaultDatabaseName;
     }
     void AutoSetSuperTable() {
-        if (target != null) superTableName = target.GetType().Name;
+        if (target != null) superTableName = SQL.SetSTableNameWith(target);
     }
     void AutoSetTable() {
-        tableName = gameObject.name;
+        tableName = SQL.SetTableNameWith(target);
     }
     //Cache every Tag and Field in dictionaries to boost performance.
     public void MakeCache()
