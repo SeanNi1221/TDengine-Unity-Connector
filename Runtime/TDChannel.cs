@@ -29,11 +29,11 @@ public class TDChannel : MonoBehaviour
     public bool autoSetTable = true;
     void OnEnable()
     {
+        if (autoSetTarget && target == null) AutoSetTarget();
         if (autoInitialize) Initialize();
     }
     public void Initialize()
     {
-        if (autoSetTarget) AutoSetTarget();
         MakeCache();
         if (autoSetDatabase) AutoSetDatabase();
         if (autoSetSuperTable) AutoSetSuperTable();
