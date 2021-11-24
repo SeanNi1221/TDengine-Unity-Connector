@@ -366,25 +366,25 @@ public partial class TDBridge
         }
         return list;        
     }
-    // public static Func<object, FieldInfo, string> serializeValue = (obj, field) => {
-    //     var fieldValue =  field.GetValue(obj);
-    //     if (fieldValue == null) return "NULL";
-    //     int typeIndex = TDBridge.varType.IndexOf(field.FieldType);
-    //     switch (typeIndex)
-    //     {
-    //         default: return fieldValue.ToString();
-    //         case 5: return serializeInt64((System.Int64)fieldValue);
-    //         case 6: return serializeSingle((float)fieldValue);
-    //         case 7: return serializeDouble((System.Double)fieldValue);
-    //         case 8: return serializeBin((bin)fieldValue);
-    //         case 9: return serializeDateTime((System.DateTime)fieldValue);
-    //         case 10: return serializeString((string)fieldValue);
-    //         case 11: return serializeVector2((Vector2)fieldValue);
-    //         case 12: return serializeVector3((Vector3)fieldValue);
-    //         case 13: return serializeQuaternion((Quaternion)fieldValue);
-    //         case 14: return serializeTransform(fieldValue as Transform);
-    //     }        
-    // };
+    public static bool SerializeObject(object obj, out string result) {
+        Type t = obj.GetType();
+        int i = varType.IndexOf(t);
+        if (i<1) { result = string.Empty; return false;}
+        switch (i)
+        {
+            default: result = obj.ToString(); return true;
+            case 5: result = serializeInt64((System.Int64)obj); return true;
+            case 6: result = serializeSingle((float)obj); return true;
+            case 7: result = serializeDouble((System.Double)obj); return true;
+            case 8: result = serializeBin((bin)obj, null); return true;
+            case 9: result = serializeDateTime((System.DateTime)obj); return true;
+            case 10: result = serializeString((string)obj, null); return true;
+            case 11: result = serializeVector2((Vector2)obj); return true;
+            case 12: result = serializeVector3((Vector3)obj); return true;
+            case 13: result = serializeQuaternion((Quaternion)obj); return true;
+            case 14: result = serializeTransform(obj as Transform); return true;
+        }
+    }
     public static Func<UnityEngine.Object, FieldInfo, int, int?, string> serializeValue = (obj, field, typeIndex, textLength) => {
         var fieldValue =  field.GetValue(obj);
         if (fieldValue == null) return "NULL";
