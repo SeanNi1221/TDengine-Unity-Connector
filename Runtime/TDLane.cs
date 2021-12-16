@@ -6,7 +6,7 @@ using System.Reflection;
 namespace Sean21.TDengineConnector
 {
 [ExecuteInEditMode]
-public class TDChannel : MonoBehaviour
+public class TDLane : MonoBehaviour
 {
     public UnityEngine.Object target;
     public string databaseName;
@@ -38,8 +38,8 @@ public class TDChannel : MonoBehaviour
         if (autoSetDatabase) AutoSetDatabase();
         if (autoSetSuperTable) AutoSetSuperTable();
         if (autoSetTable) AutoSetTable();
-        if (!request.channel) {
-            request.channel = this;
+        if (!request.lane) {
+            request.lane = this;
         }
     }
     //Search for the first component that has either [DataTag] or [DataField] attribute, and make it target
@@ -72,7 +72,7 @@ public class TDChannel : MonoBehaviour
     public void MakeCache()
     {
         ClearCache();
-        if (target == null) { Debug.Log(tableName + " - No target assigned."); return; }
+        if (target == null) { Debug.LogWarning(tableName + " - No target assigned."); return; }
         FieldInfo[] targetFields = target.GetType().GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
         if (targetFields.Length < 1) { Debug.Log(tableName + " - No field found."); return; }
         foreach (FieldInfo info in targetFields) {
@@ -172,24 +172,17 @@ public class TDChannel : MonoBehaviour
         yield return request.Send( SQL.GetLastRow(this, _fieldNames, null, false) );
         TDBridge.FromTD(this, request.result);
     }
-    public void PushTagsImmediately(params string[] tag_names)
+    public void PushImmediate(params string[] tag_names)
     {
-        StartCoroutine(PushTags(tag_names));
+        StartCoroutine(Push(tag_names));
     }
-    public IEnumerator PushTags(params string[] tag_names) {
+    public IEnumerator Push(params string[] tag_names) {
         List<string> sqls = SQL.SetTags(this, tag_names);
         foreach (string sql in sqls) {
             request.sql = sql;
             yield return request.Send();
         }
     }
-    // public IEnumerator push() {
-    //     List<string> sqls = SQL.SetTags(target, databaseName, tableName);
-    //     foreach (string _sql in sqls) {
-    //         request.sql = _sql;
-    //         yield return request.Send();
-    //     }
-    // }
     public void Alter()
     {
         StartCoroutine(TDBridge.AlterSTableOf(target, databaseName, superTableName));

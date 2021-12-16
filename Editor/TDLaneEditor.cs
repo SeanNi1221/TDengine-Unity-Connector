@@ -4,9 +4,9 @@ using UnityEngine;
 using UnityEditor;
 namespace Sean21.TDengineConnector
 {
-[CustomEditor(typeof(TDChannel))]
+[CustomEditor(typeof(TDLane))]
 [CanEditMultipleObjects]
-public class TDChannelEditor : Editor
+public class TDLaneEditor : Editor
 {
     SerializedProperty targetProp;
     SerializedProperty databaseNameProp;
@@ -53,7 +53,7 @@ public class TDChannelEditor : Editor
         GUIContent create = new GUIContent( (Texture)Resources.Load("create"), "Create Table");
         GUIContent drop = new GUIContent( (Texture)Resources.Load("remove"), "Drop Table");
         GUIContent pull = new GUIContent(" Pull", (Texture)Resources.Load("pull"), "Read the last row(fields and tags) from the table and update values of the Target object");
-        GUIContent push = new GUIContent(" Push Tags", (Texture)Resources.Load("push"), "Overwrite all tags of the table with current values of the Target object");
+        GUIContent push = new GUIContent(" Push", (Texture)Resources.Load("push"), "Overwrite all tags of the table with current values of the Target object");
         GUIContent alter = new GUIContent( (Texture)Resources.Load("alter"), "Alter Super Table\n \n"+
             "Apply changes on the shape of the super table.\n"+
             "Specifically performs the following operations in sequence: \n"+
@@ -65,13 +65,13 @@ public class TDChannelEditor : Editor
         GUIContent insertSpecificLabel = new GUIContent(" Insert Specific", "Turn this on if the sequence of fields differ from that of comlumns in the table.");
         GUIContent insert = new GUIContent(" Insert", (Texture)Resources.Load("insert"), "Insert Values");
         
-        GUIContent autoInitializeLabel = new GUIContent("Auto Initialize", "Auto Initialize TDChannel on enable");
+        GUIContent autoInitializeLabel = new GUIContent("Auto Initialize", "Auto Initialize TDLane on enable");
         GUIContent autoSetTargetLabel = new GUIContent("Auto Set Target", "Scan the components of current GameObject, search for the first one that has either [DataTag] or [DataField] attribute, then make this component target.");
         GUIContent autoSetDatabaseLabel = new GUIContent("Auto Set Database", "Use 'Default Database Name' in the TDBridge as database name.");
         GUIContent autoSetSuperTableLabel = new GUIContent("Auto Set Super Table", "Use target type name as super table name");
         GUIContent autoSetTableLabel = new GUIContent("Auto Set Table Name", "Use current GameObject's name as table name. Unsupported characters will be culled.");
 
-        TDChannel td = (TDChannel)target;
+        TDLane td = (TDLane)target;
         var fields = td.fields;
         var tags = td.tags;
         
@@ -180,7 +180,7 @@ public class TDChannelEditor : Editor
             td.PullImmediately();
         }
         if ( GUILayout.Button(push, GUILayout.Height(24)) ){
-            td.PushTagsImmediately();
+            td.PushImmediate();
         }        
         if ( GUILayout.Button(alter, GUILayout.Width(28), GUILayout.Height(24)) ){
             td.Alter();

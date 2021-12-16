@@ -19,8 +19,8 @@ public static class SQL
         string columnNames = ColumnNamesWithoutTS(obj);
         return action + columnNames + " FROM " + db_name + Dot + tb_name + option; 
     }
-    public static string GetFirstRowWithoutTS(TDChannel channel) {
-        return "SELECT " + ColumnNamesWithoutTS(channel) + " FROM " + channel.databaseName + Dot + channel.tableName + " LIMIT 1";
+    public static string GetFirstRowWithoutTS(TDLane lane) {
+        return "SELECT " + ColumnNamesWithoutTS(lane) + " FROM " + lane.databaseName + Dot + lane.tableName + " LIMIT 1";
     }
    // SELECT LAST_ROW(columnNames) FROM test.TH_Meter0001
     public static string GetLastRow(UnityEngine.Object obj, string fieldNames = "*", string tagNames = null, string db_name = null, string tb_name = null, bool allTags = false) {
@@ -31,12 +31,12 @@ public static class SQL
             action + Bracket(fieldNames) + "," + TagNames(obj, false) + " FROM " + db_name + Dot + tb_name :            
             action + Bracket(fieldNames) + (string.IsNullOrEmpty(tagNames)? "" : ("," + tagNames)) + " FROM " + db_name + Dot + tb_name; 
     }
-    public static string GetLastRow(TDChannel channel, string fieldNames = "*", string tagNames = null, bool allTags = false) {
+    public static string GetLastRow(TDLane lane, string fieldNames = "*", string tagNames = null, bool allTags = false) {
         string action = "SELECT LAST_ROW";
-        string db_name = channel.databaseName;
-        string tb_name = db_name + Dot + channel.tableName;    
+        string db_name = lane.databaseName;
+        string tb_name = db_name + Dot + lane.tableName;    
         return allTags?
-            action + Bracket(fieldNames) + "," + TagNames(channel, false) + " FROM " + tb_name :            
+            action + Bracket(fieldNames) + "," + TagNames(lane, false) + " FROM " + tb_name :            
             action + Bracket(fieldNames) + (string.IsNullOrEmpty(tagNames)? "" : ("," + tagNames)) + " FROM " + tb_name; 
     }
     // SELECT tag1_name, tag2_name FROM test.TH_Meter0001
@@ -46,16 +46,16 @@ public static class SQL
         tb_name = SetTableNameWith(obj, tb_name);
         return action + TagNames(obj, false) + " FROM " + db_name + Dot + tb_name;           
     }
-    public static string GetTags(TDChannel channel) {
-        return "SELECT " + TagNames(channel, false) + " FROM " + channel.databaseName + Dot + channel.tableName;
+    public static string GetTags(TDLane lane) {
+        return "SELECT " + TagNames(lane, false) + " FROM " + lane.databaseName + Dot + lane.tableName;
     }  
     public static string CreateDatabase(string db_name = null, bool if_not_exists = true) {
         string action = if_not_exists? "CREATE DATABASE IF NOT EXISTS ":"CREATE DATABASE ";
         db_name = SetDatabaseName(db_name);
         return action + db_name;
     }
-    public static string CreateDatabase(TDChannel channel) {
-        return "CREATE DATABASE IF NOT EXISTS " + channel.databaseName;
+    public static string CreateDatabase(TDLane lane) {
+        return "CREATE DATABASE IF NOT EXISTS " + lane.databaseName;
     }
     public static string CreateSTable<T>(string db_name = null, string stb_name = null, string timestamp_field_name = "ts", bool if_not_exists = true) {
         return CreateSTable(typeof(T), db_name, stb_name, timestamp_field_name, if_not_exists);
@@ -73,12 +73,12 @@ public static class SQL
         if(TDBridge.DetailedDebugLog) Debug.Log("SQL- CREATE STABLE from type " + type.Name);
         return sql;
     }
-    public static string CreateSTable(TDChannel channel) {
+    public static string CreateSTable(TDLane lane) {
         string action = "CREATE STABLE IF NOT EXISTS ";
-        string db_name = channel.databaseName;
-        string stb_name = db_name + Dot + channel.superTableName;
-        string fieldTypes = FieldTypes(channel);
-        string tagTypes = TagTypes(channel);
+        string db_name = lane.databaseName;
+        string stb_name = db_name + Dot + lane.superTableName;
+        string fieldTypes = FieldTypes(lane);
+        string tagTypes = TagTypes(lane);
         return action + stb_name + fieldTypes + tagTypes;        
     }
     public static string CreateTable<T>(string db_name = null, string tb_name = null, string timestamp_field_name = "ts", bool if_not_exists = true) {
@@ -99,11 +99,11 @@ public static class SQL
         if(TDBridge.DetailedDebugLog) Debug.Log("SQL- CREATE TABLE from object " + obj.name);
         return sql;
     }
-    public static string CreateTable(TDChannel channel) {
+    public static string CreateTable(TDLane lane) {
         string action = "CREATE TABLE IF NOT EXISTS ";
-        string db_name = channel.databaseName;
-        string tb_name = db_name + Dot + channel.tableName;
-        string fieldTypes = FieldTypes(channel);
+        string db_name = lane.databaseName;
+        string tb_name = db_name + Dot + lane.tableName;
+        string fieldTypes = FieldTypes(lane);
         return action + tb_name + fieldTypes;
     }
     public static string CreateTableUsing(UnityEngine.Object obj, string db_name = null, string tb_name = null, string stb_name = null, bool if_not_exists = true) {
@@ -135,14 +135,14 @@ public static class SQL
         if(TDBridge.DetailedDebugLog) Debug.Log("SQL- CREATE TABLE from " + objects.Length + " objects using"  + stb_name);
         return sql;
     }
-    public static string CreateTableUsing(params TDChannel[] channels) {
+    public static string CreateTableUsing(params TDLane[] lanes) {
         string option = " IF NOT EXISTS ";            
         string tables = null;
-        foreach (var channel in channels) {
-            string db_name = channel.databaseName;
-            string stb_name = db_name + Dot + channel.superTableName;
-            string tb_name = db_name + Dot + channel.tableName;
-            string tagValues = TagValues(channel);
+        foreach (var lane in lanes) {
+            string db_name = lane.databaseName;
+            string stb_name = db_name + Dot + lane.superTableName;
+            string tb_name = db_name + Dot + lane.tableName;
+            string tagValues = TagValues(lane);
             tables += (option + tb_name + " USING " + stb_name + tagValues + Space);
         }
         return "CREATE TABLE " + tables;
@@ -166,14 +166,14 @@ public static class SQL
         }
         return action + string.Join(" ", tables);
     }
-    public static string Insert(params TDChannel[] channels) {
-        if (channels.Length < 1) {Debug.Log("No channel to insert, aborted!"); return string.Empty;}
+    public static string Insert(params TDLane[] lanes) {
+        if (lanes.Length < 1) {Debug.Log("No lane to insert, aborted!"); return string.Empty;}
         string action = "INSERT INTO ";
         List<string> tables = new List<string>();
-        foreach (var channel in channels) {
-            string db_name = channel.databaseName;
-            string tb_name = db_name + Dot + channel.tableName;
-            string fieldValues = FieldValues(channel);
+        foreach (var lane in lanes) {
+            string db_name = lane.databaseName;
+            string tb_name = db_name + Dot + lane.tableName;
+            string fieldValues = FieldValues(lane);
             tables.Add( tb_name + fieldValues);
         }        
         return action + string.Join(" ", tables);                        
@@ -198,15 +198,15 @@ public static class SQL
         }
         return action + string.Join(" ", tables);                        
     }
-    public static string InsertSpecific(params TDChannel[] channels) {
-        if (channels.Length < 1) {Debug.Log("No channel to insert, aborted!"); return string.Empty;}
+    public static string InsertSpecific(params TDLane[] lanes) {
+        if (lanes.Length < 1) {Debug.Log("No channel to insert, aborted!"); return string.Empty;}
         string action = "INSERT INTO ";
         List<string> tables = new List<string>();
-        foreach (var channel in channels) {
-            string db_name = channel.databaseName;
-            string tb_name = db_name + Dot + channel.tableName;
-            string fieldNames = FieldNames(channel);
-            string fieldValues = FieldValues(channel);
+        foreach (var lane in lanes) {
+            string db_name = lane.databaseName;
+            string tb_name = db_name + Dot + lane.tableName;
+            string fieldNames = FieldNames(lane);
+            string fieldValues = FieldValues(lane);
             tables.Add( tb_name + Space + fieldNames + fieldValues);
         }        
         return action + string.Join(" ", tables);                        
@@ -235,17 +235,17 @@ public static class SQL
         }
         return action + string.Join(" ", tables);
     }
-    public static string InsertUsing(params TDChannel[] channels) {
-        if (channels.Length < 1) {Debug.Log("No channel to insert, aborted!"); return string.Empty;}
+    public static string InsertUsing(params TDLane[] lanes) {
+        if (lanes.Length < 1) {Debug.Log("No channel to insert, aborted!"); return string.Empty;}
         string action = "INSERT INTO ";
         string operation = " USING ";
         List<string> tables = new List<string>();
-        foreach (var channel in channels) {
-            string db_name = channel.databaseName;
-            string stb_name = db_name + Dot + channel.superTableName;
-            string tb_name = db_name + Dot + channel.tableName;
-            string tagValues = TagValues(channel);
-            string fieldValues = FieldValues(channel);
+        foreach (var lane in lanes) {
+            string db_name = lane.databaseName;
+            string stb_name = db_name + Dot + lane.superTableName;
+            string tb_name = db_name + Dot + lane.tableName;
+            string tagValues = TagValues(lane);
+            string fieldValues = FieldValues(lane);
             tables.Add( tb_name + operation + stb_name + tagValues + Space + fieldValues);
         }
         return action + string.Join(" ", tables);
@@ -276,19 +276,19 @@ public static class SQL
         }
         return action + string.Join(" ", tables);
     }
-    public static string InsertSpecificUsing(params TDChannel[] channels) {
-        if (channels.Length < 1) {Debug.Log("No channel to insert, aborted!"); return string.Empty;}
+    public static string InsertSpecificUsing(params TDLane[] lanes) {
+        if (lanes.Length < 1) {Debug.Log("No channel to insert, aborted!"); return string.Empty;}
         string action = "INSERT INTO ";
         string operation = " USING ";
         List<string> tables = new List<string>();
-        foreach (var channel in channels) {
-            string db_name = channel.databaseName;
-            string stb_name = db_name + Dot + channel.superTableName;
-            string tb_name = db_name + Dot + channel.tableName;
-            string tagNames = TagNames(channel);
-            string tagValues = TagValues(channel);
-            string fieldNames = FieldNames(channel);
-            string fieldValues = FieldValues(channel);
+        foreach (var lane in lanes) {
+            string db_name = lane.databaseName;
+            string stb_name = db_name + Dot + lane.superTableName;
+            string tb_name = db_name + Dot + lane.tableName;
+            string tagNames = TagNames(lane);
+            string tagValues = TagValues(lane);
+            string fieldNames = FieldNames(lane);
+            string fieldValues = FieldValues(lane);
             tables.Add( tb_name + operation + stb_name + Space + tagNames + tagValues + Space + fieldNames + fieldValues);
         }
         return action + string.Join(" ", tables);
@@ -308,26 +308,18 @@ public static class SQL
         }
         return (tb_name, time);            
     };
-//ALTER TABLE tb_name SET TAG tag1_name=new_tag1_value; ALTER TABLE tb_name SET TAG tag2_name=new_tag2_value;
-    // public static List<string> SetTags(TDChannel channel) {
-    //     if (channel.tags.Count < 1) { if(TDBridge.DetailedDebugLog) Debug.Log("No tag to set, aborted."); return new List<string>(); }
-    //     List<string> sqls = new List<string>(); 
-    //     foreach (string tag_name in channel.tags.Keys) {
-    //         sqls.Add(SetTag(channel.target, tag_name, channel.databaseName, channel.tableName));
-    //     }
-    //     return sqls;
-    // }
-    public static List<string> SetTags(TDChannel channel, params string[] tag_names) {
-        if (channel.tags.Count < 1) { if(TDBridge.DetailedDebugLog) Debug.Log("No tag to set, aborted."); return new List<string>(); }
+
+    public static List<string> SetTags(TDLane lane, params string[] tag_names) {
+        if (lane.tags.Count < 1) { if(TDBridge.DetailedDebugLog) Debug.Log("No tag to set, aborted."); return new List<string>(); }
         List<string> sqls = new List<string>();
         if (tag_names.Length < 1 || tag_names == null) {
-            foreach (string tag_name in channel.tags.Keys) {
-                sqls.Add(SetTag(channel, tag_name));
+            foreach (string tag_name in lane.tags.Keys) {
+                sqls.Add(SetTag(lane, tag_name));
             }
         }
         else {
             foreach (string tag_name in tag_names) {
-                sqls.Add(SetTag(channel, tag_name));
+                sqls.Add(SetTag(lane, tag_name));
             }            
         }
         return sqls;
@@ -354,16 +346,16 @@ public static class SQL
         return sqls;
     }
 // //ALTER TABLE tb_name SET TAG tag_name=new_tag_value;
-    public static string SetTag(TDChannel channel, string tag_name) {
+    public static string SetTag(TDLane lane, string tag_name) {
         string action  = "ALTER TABLE ";
         string operation = " SET TAG ";
         
-        var tag = channel.tags[tag_name]; 
+        var tag = lane.tags[tag_name]; 
         if (tag == null) { if(TDBridge.DetailedDebugLog) Debug.LogError("Cannot find tag " + tag_name ); return string.Empty;}
-        int typeIndex = channel.types[tag_name];
-        int length = channel.lengths[tag_name];
-        string new_tag_value = TDBridge.serializeValue(channel.target, tag, typeIndex, length);
-        return action + channel.databaseName + Dot + channel.tableName + operation + tag_name + "=" + new_tag_value;
+        int typeIndex = lane.types[tag_name];
+        int length = lane.lengths[tag_name];
+        string new_tag_value = TDBridge.serializeValue(lane.target, tag, typeIndex, length);
+        return action + lane.databaseName + Dot + lane.tableName + operation + tag_name + "=" + new_tag_value;
     }
     public static string SetTag(UnityEngine.Object obj, string tag_name, string db_name = null, string tb_name = null) {
         string action  = "ALTER TABLE ";
@@ -378,9 +370,9 @@ public static class SQL
         new_tag_value = TDBridge.serializeValue(obj, field, TDBridge.varType.IndexOf(field.FieldType), dt.length);
         return action + db_name + Dot + tb_name + operation + tag_name + "=" + new_tag_value;
     }
-    public static string FieldNames(TDChannel channel, bool withBracket = true ) {
-        string names = string.Join(", ", channel.fields.Keys);
-        string allNames = channel.timeStampName + ", " + names;
+    public static string FieldNames(TDLane lane, bool withBracket = true ) {
+        string names = string.Join(", ", lane.fields.Keys);
+        string allNames = lane.timeStampName + ", " + names;
         return withBracket? Bracket(allNames) : allNames;
     }
 
@@ -402,9 +394,9 @@ public static class SQL
         string names = string.Join(", ", fieldNames);
         return withBracket? Bracket(names) : names;
     }
-    public static string ColumnNamesWithoutTS(TDChannel channel, bool withBracket = false) {
-        var columns = (ICollection<string>)channel.tags.Keys;
-        foreach(var key in channel.fields.Keys) {
+    public static string ColumnNamesWithoutTS(TDLane lane, bool withBracket = false) {
+        var columns = (ICollection<string>)lane.tags.Keys;
+        foreach(var key in lane.fields.Keys) {
             columns.Add(key);
         }
         string names = string.Join(", ", columns );
@@ -429,8 +421,8 @@ public static class SQL
         string names = string.Join(", ", columnNames);
         return withBracket? Bracket(names) : names;
     }
-    public static string TagNames(TDChannel channel, bool withBracket = true) {
-        string names = string.Join(", ", channel.tags.Keys);
+    public static string TagNames(TDLane lane, bool withBracket = true) {
+        string names = string.Join(", ", lane.tags.Keys);
         return withBracket? Bracket( names ) : names;
     }
     public static string TagNames(UnityEngine.Object obj, bool withBracket = true) {
@@ -451,11 +443,11 @@ public static class SQL
         string names = string.Join(", ", tagNames);
         return withBracket? Bracket( names ) : names;
     }
-    public static string FieldTypes(TDChannel channel) {
-        List<string> fieldTypes = new List<string>{ "'" + channel.timeStampName + "'" + " TIMESTAMP" };
-        foreach (KeyValuePair<string, FieldInfo> pair in channel.fields ) {
+    public static string FieldTypes(TDLane lane) {
+        List<string> fieldTypes = new List<string>{ "'" + lane.timeStampName + "'" + " TIMESTAMP" };
+        foreach (KeyValuePair<string, FieldInfo> pair in lane.fields ) {
             string key = pair.Key;
-            int typeIndex = channel.types[key];
+            int typeIndex = lane.types[key];
             switch (typeIndex) {
                 default: break;
                 case 0: 
@@ -467,7 +459,7 @@ public static class SQL
             }
             string typeOfThis = " '" + key + "' " + TDBridge.dataType[typeIndex];
             if (isTextData(typeIndex)) {
-                typeOfThis += Bracket( channel.lengths[key].ToString() );
+                typeOfThis += Bracket( lane.lengths[key].ToString() );
             }
             fieldTypes.Add(typeOfThis);
         }
@@ -505,11 +497,11 @@ public static class SQL
         }
         return " (" + string.Join("," , fieldTypes) + ") ";
     }
-    public static string TagTypes(TDChannel channel) {
+    public static string TagTypes(TDLane lane) {
         List<string> tagTypes = new List<string>();
-        foreach (KeyValuePair<string, FieldInfo> pair in channel.tags ) {
+        foreach (KeyValuePair<string, FieldInfo> pair in lane.tags ) {
             string key = pair.Key;
-            int typeIndex = channel.types[key];
+            int typeIndex = lane.types[key];
             switch (typeIndex) {
                 default: break;
                 case 0: 
@@ -521,7 +513,7 @@ public static class SQL
             }
             string typeOfThis = " '" + key + "' " + TDBridge.dataType[typeIndex];
             if (isTextData(typeIndex)) {
-                typeOfThis += Bracket( channel.lengths[key].ToString() );
+                typeOfThis += Bracket( lane.lengths[key].ToString() );
             }
             tagTypes.Add(typeOfThis);
         }
@@ -567,11 +559,11 @@ public static class SQL
         else return typeOfThis;
     };
 //VALUES (NOW, 10.2, 219, 0.32)
-    public static string FieldValues(TDChannel channel) {
-        List<string> fieldValues = new List<string>{channel.dataTime};
-        foreach (KeyValuePair<string, FieldInfo> pair in channel.fields) {
+    public static string FieldValues(TDLane lane) {
+        List<string> fieldValues = new List<string>{lane.dataTime};
+        foreach (KeyValuePair<string, FieldInfo> pair in lane.fields) {
             string key = pair.Key;
-            string value = TDBridge.serializeValue(channel.target, pair.Value, channel.types[key], channel.lengths[key]);
+            string value = TDBridge.serializeValue(lane.target, pair.Value, lane.types[key], lane.lengths[key]);
             fieldValues.Add(value);
         }
         return " VALUES" + Bracket( string.Join(", " , fieldValues) );            
@@ -588,11 +580,11 @@ public static class SQL
         return " VALUES" + Bracket( string.Join(", " , fieldValues) );            
     }
 //TAGS (tag_value1, ...)
-    public static string TagValues(TDChannel channel) {
+    public static string TagValues(TDLane lane) {
         List<string> tagValues = new List<string>();
-        foreach (KeyValuePair<string, FieldInfo> pair in channel.tags) {
+        foreach (KeyValuePair<string, FieldInfo> pair in lane.tags) {
             string key = pair.Key;
-            string value = TDBridge.serializeValue(channel.target, pair.Value, channel.types[key], channel.lengths[key]);
+            string value = TDBridge.serializeValue(lane.target, pair.Value, lane.types[key], lane.lengths[key]);
             tagValues.Add(value);
         }    
         return " TAGS" + Bracket( string.Join(", " , tagValues) );

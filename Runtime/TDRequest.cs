@@ -22,7 +22,7 @@ public class TDRequest
     public float responseTime;
     public TDResult result;
     [HideInInspector]
-    public TDChannel channel;
+    public TDLane lane;
     [HideInInspector]
     public bool succeeded;
     [HideInInspector]
@@ -61,7 +61,7 @@ public class TDRequest
     }
     public void Push(string SQL)
     {
-        if (channel) channel.SendRequest(SQL);
+        if (lane) lane.SendRequest(SQL);
         else TDBridge.SendRequest(SQL);
     }
     public IEnumerator Send()

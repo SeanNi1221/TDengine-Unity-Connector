@@ -34,8 +34,8 @@ public partial class TDBridge
     public static void CreateDatabase(string db_name = null, bool if_not_exists = true) {
         SendRequest(SQL.CreateDatabase(db_name, if_not_exists));
     }
-    public static void CreateDatabase(TDChannel channel) {
-        SendRequest(SQL.CreateDatabase(channel));
+    public static void CreateDatabase(TDLane lane) {
+        SendRequest(SQL.CreateDatabase(lane));
     }
     public static void CreateSTable<T>(string db_name = null, string stb_name = null, string timestamp_field_name = "ts", bool if_not_exists = true) {
         string sql = SQL.CreateSTable<T>(db_name, stb_name, timestamp_field_name, if_not_exists);
@@ -45,8 +45,8 @@ public partial class TDBridge
         string sql = SQL.CreateSTable(obj, db_name, stb_name, timestamp_field_name, if_not_exists);
         SendRequest(sql);
     }
-    public static void CreateSTable(TDChannel channel) {
-        string sql = SQL.CreateSTable(channel);
+    public static void CreateSTable(TDLane lane) {
+        string sql = SQL.CreateSTable(lane);
         SendRequest(sql);
     }
     public static void CreateTable<T>(string db_name = null, string tb_name = null, string timestamp_field_name = "ts", bool if_not_exists = true) {
@@ -57,8 +57,8 @@ public partial class TDBridge
         string sql = SQL.CreateTable(obj, db_name, tb_name, timestamp_field_name, if_not_exists);
         SendRequest(sql);
     }
-    public static void CreateTable(TDChannel channel) {
-        string sql = SQL.CreateTable(channel);
+    public static void CreateTable(TDLane lane) {
+        string sql = SQL.CreateTable(lane);
         SendRequest(sql);
     }
     public static void CreateTableUsing(UnityEngine.Object obj, string db_name = null, string tb_name = null, string stb_name = null, bool if_not_exists = true) {
@@ -69,8 +69,8 @@ public partial class TDBridge
         string sql = SQL.CreateTableUsing(objects, db_name, tb_names, stb_name, if_not_exists);
         SendRequest(sql);
     }
-    public static void CreateTableUsing(params TDChannel[] channels) {
-        string sql = SQL.CreateTableUsing(channels);
+    public static void CreateTableUsing(params TDLane[] lanes) {
+        string sql = SQL.CreateTableUsing(lanes);
         SendRequest(sql);
     }
     public static void Insert(UnityEngine.Object obj, string db_name = null, string tb_name = null, string time = "NOW") {
@@ -81,8 +81,8 @@ public partial class TDBridge
         string sql = SQL.Insert(objects, db_name,_tb_name, _time);
         SendRequest(sql);
     }
-    public static void Insert(params TDChannel[] channels) {
-        string sql = SQL.Insert(channels);
+    public static void Insert(params TDLane[] lanes) {
+        string sql = SQL.Insert(lanes);
         SendRequest(sql);
     }
     public static void InsertSpecific(UnityEngine.Object obj, string db_name = null, string tb_name = null,string timestamp_field_name = "ts", string time = "NOW") {
@@ -93,8 +93,8 @@ public partial class TDBridge
         string sql = SQL.InsertSpecific(objects, db_name, _tb_name, timestamp_field_name, _time);
         SendRequest(sql);
     }
-    public static void InsertSpecific(params TDChannel[] channels) {
-        string sql = SQL.InsertSpecific(channels);
+    public static void InsertSpecific(params TDLane[] lanes) {
+        string sql = SQL.InsertSpecific(lanes);
         SendRequest(sql);
     }
     public static void InsertUsing(UnityEngine.Object obj, string db_name = null, string stb_name = null, string tb_name = null, string time = "NOW") {
@@ -105,8 +105,8 @@ public partial class TDBridge
         string sql = SQL.InsertUsing(objects, db_name, stb_name, _tb_name, _time);
         SendRequest(sql);
     }
-    public static void InsertUsing(params TDChannel[] channels) {
-        string sql = SQL.InsertUsing(channels);
+    public static void InsertUsing(params TDLane[] lanes) {
+        string sql = SQL.InsertUsing(lanes);
         SendRequest(sql);
     }
     public static void InsertSpecificUsing(UnityEngine.Object obj, string db_name = null, string stb_name = null, string tb_name = null, string time = "NOW") {
@@ -117,17 +117,17 @@ public partial class TDBridge
         string sql = SQL.InsertSpecificUsing(objects, db_name, stb_name, _tb_name, timestamp_field_name, _time);
         SendRequest(sql);
     }
-    public static void InsertSpecificUsing(params TDChannel[] channels) {
-        string sql = SQL.InsertSpecificUsing(channels);
+    public static void InsertSpecificUsing(params TDLane[] lanes) {
+        string sql = SQL.InsertSpecificUsing(lanes);
         SendRequest(sql);
     }
     public static void SetTag(UnityEngine.Object obj, string tag_name, string db_name = null, string tb_name = null) {
         string sql = SQL.SetTag(obj, tag_name, db_name, tb_name);
         SendRequest(sql);
     }
-    public static void SetTag(TDChannel channel, string tag_name) {
-        string sql = SQL.SetTag(channel, tag_name);
-        channel.SendRequest(sql);
+    public static void SetTag(TDLane lane, string tag_name) {
+        string sql = SQL.SetTag(lane, tag_name);
+        lane.SendRequest(sql);
     }
     public static IEnumerator SetTags(UnityEngine.Object obj, string db_name = null, string tb_name = null, params string[] tag_names) {
         List<string> sqls = SQL.SetTags(obj, db_name, tb_name, tag_names);
@@ -135,10 +135,10 @@ public partial class TDBridge
             yield return Request.Send(sql);
         }
     }
-    public static IEnumerator SetTags(TDChannel channel, params string[] tag_names) {
-        List<string> sqls = SQL.SetTags(channel, tag_names);
+    public static IEnumerator SetTags(TDLane lane, params string[] tag_names) {
+        List<string> sqls = SQL.SetTags(lane, tag_names);
         foreach (string sql in sqls) {
-            yield return channel.request.Send(sql);
+            yield return lane.request.Send(sql);
         }
     }
     public static IEnumerator AlterSTableOf<T>(string db_name = null, string stb_name = null) {
@@ -171,21 +171,21 @@ public partial class TDBridge
         yield return AlterColumns(currentTagsMeta, newTagsMeta,db_name, stb_name, action, true);
         if(TDBridge.i.detailedDebugLog) Debug.Log("Altering ---TAGS--- of " + stb_name + " finished.");
     }
-    public static IEnumerator AlterSTableOf(TDChannel channel) {
-        string db_name = channel.databaseName;
-        string stb_name = channel.superTableName;
+    public static IEnumerator AlterSTableOf(TDLane lane) {
+        string db_name = lane.databaseName;
+        string stb_name = lane.superTableName;
         string action = "ALTER STABLE ";
 //Aqcuire table structure
     //fields
-        yield return channel.request.Send("SELECT FIRST(*) FROM " + db_name + Dot + stb_name);
-        List<TDResult.ColumnMeta> currentMeta = channel.request.result.column_meta;
-        List<TDResult.ColumnMeta> newMeta = FieldMetasOf(channel);
+        yield return lane.request.Send("SELECT FIRST(*) FROM " + db_name + Dot + stb_name);
+        List<TDResult.ColumnMeta> currentMeta = lane.request.result.column_meta;
+        List<TDResult.ColumnMeta> newMeta = FieldMetasOf(lane);
     //tags
-        channel.request.sql = "SELECT * FROM " + db_name + Dot + stb_name + " LIMIT 1";
-        yield return channel.request.Send();
-        channel.request.result.column_meta.RemoveRange(0, currentMeta.Count);
-        List<TDResult.ColumnMeta> currentTagsMeta = channel.request.result.column_meta;
-        List<TDResult.ColumnMeta> newTagsMeta = TagMetasOf(channel);
+        lane.request.sql = "SELECT * FROM " + db_name + Dot + stb_name + " LIMIT 1";
+        yield return lane.request.Send();
+        lane.request.result.column_meta.RemoveRange(0, currentMeta.Count);
+        List<TDResult.ColumnMeta> currentTagsMeta = lane.request.result.column_meta;
+        List<TDResult.ColumnMeta> newTagsMeta = TagMetasOf(lane);
 //Take action for fields
         yield return AlterColumns(currentMeta, newMeta,db_name, stb_name, action);
         if(TDBridge.i.detailedDebugLog) Debug.Log("Altering ---FIELDS--- of " + stb_name + " finished.");
@@ -213,14 +213,14 @@ public partial class TDBridge
         yield return AlterColumns(currentMeta, newMeta,db_name, tb_name, action);
         Debug.Log("Altering table " + tb_name + " finished.");
     }
-    public static IEnumerator AlterTableOf(TDChannel channel) {
-        string db_name = channel.databaseName;
-        string tb_name = db_name + Dot + channel.tableName;
+    public static IEnumerator AlterTableOf(TDLane lane) {
+        string db_name = lane.databaseName;
+        string tb_name = db_name + Dot + lane.tableName;
         string action = "ALTER TABLE ";
 //Aqcuire table structure
-        yield return channel.request.Send("SELECT FIRST(*) FROM " + tb_name);
-        List<TDResult.ColumnMeta> currentMeta = channel.request.result.column_meta;
-        List<TDResult.ColumnMeta> newMeta = FieldMetasOf(channel);
+        yield return lane.request.Send("SELECT FIRST(*) FROM " + tb_name);
+        List<TDResult.ColumnMeta> currentMeta = lane.request.result.column_meta;
+        List<TDResult.ColumnMeta> newMeta = FieldMetasOf(lane);
 //Take action
         yield return AlterColumns(currentMeta, newMeta,db_name, tb_name, action);
         Debug.Log("Altering table " + tb_name + " finished.");
@@ -331,11 +331,11 @@ public partial class TDBridge
         }
         return list;
     }
-    public static List<TDResult.ColumnMeta> FieldMetasOf(TDChannel channel) {
+    public static List<TDResult.ColumnMeta> FieldMetasOf(TDLane lane) {
         List<TDResult.ColumnMeta> list = new List<TDResult.ColumnMeta>();
-        foreach (KeyValuePair<string, FieldInfo> pair in channel.fields) {
+        foreach (KeyValuePair<string, FieldInfo> pair in lane.fields) {
             string key = pair.Key;
-            TDResult.ColumnMeta current = new TDResult.ColumnMeta(key, channel.types[key], channel.lengths[key]);
+            TDResult.ColumnMeta current = new TDResult.ColumnMeta(key, lane.types[key], lane.lengths[key]);
             list.Add(current);
         }
         return list;        
@@ -357,11 +357,11 @@ public partial class TDBridge
         }
         return list;
     }
-    public static List<TDResult.ColumnMeta> TagMetasOf(TDChannel channel) {
+    public static List<TDResult.ColumnMeta> TagMetasOf(TDLane lane) {
         List<TDResult.ColumnMeta> list = new List<TDResult.ColumnMeta>();
-        foreach (KeyValuePair<string, FieldInfo> pair in channel.tags) {
+        foreach (KeyValuePair<string, FieldInfo> pair in lane.tags) {
             string key = pair.Key;
-            TDResult.ColumnMeta current = new TDResult.ColumnMeta(key, channel.types[key], channel.lengths[key]);
+            TDResult.ColumnMeta current = new TDResult.ColumnMeta(key, lane.types[key], lane.lengths[key]);
             list.Add(current);
         }
         return list;        

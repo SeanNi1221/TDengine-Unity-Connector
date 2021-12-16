@@ -40,26 +40,26 @@ public partial class TDBridge
         Debug.Log("Deserialization done.");
         return obj;        
     }
-    public static object FromTD(TDChannel channel, TDResult result, int row = 0, bool skipSearchFields = false ) {
-        Debug.Log("Deserializing object: " + channel.target.name);
+    public static object FromTD(TDLane lane, TDResult result, int row = 0, bool skipSearchFields = false ) {
+        Debug.Log("Deserializing object: " + lane.target.name);
         for (int i= 0;i < result.column_meta.Count; i++) {
             TDResult.ColumnMeta col = result.column_meta[i];            
             if (col.typeIndex == 9) if(TDBridge.DetailedDebugLog) Debug.Log("TIMESTAMP:" + result.data[row].value[i]);
             FieldInfo field = null;
             if (skipSearchFields) goto searchTags;
-            if ( channel.fields.TryGetValue(col.name, out field) ) goto set;
+            if ( lane.fields.TryGetValue(col.name, out field) ) goto set;
             searchTags:
-            if ( channel.tags.TryGetValue(col.name, out field) ) goto set;
+            if ( lane.tags.TryGetValue(col.name, out field) ) goto set;
             //Field not found:
             if(TDBridge.DetailedDebugLog) Debug.Log(SQL.Quote(col.name) + " doesn't exist in target object.");
             continue;
             set:
             if(TDBridge.DetailedDebugLog) Debug.Log("Got " + SQL.Quote(field.Name));
-            SetValueByString( channel.target, field, result.data[row].value[i] );
+            SetValueByString( lane.target, field, result.data[row].value[i] );
             continue;
         }
         Debug.Log("Deserialization done.");
-        return channel.target;
+        return lane.target;
     }
     public static void SetValueByString(object obj, FieldInfo field, string data, int? typeIndex = null) {
         field.SetValue( obj, DeserializeValue(data, field, obj) );
