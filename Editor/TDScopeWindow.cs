@@ -60,7 +60,7 @@ public class TDScopeWindow : EditorWindow
         yield return request.Send("show databases");
         dbNames = new List<string>();
         for(int i=0; i<result.data.Count; i++ ) 
-            dbNames.Add( result.Value(i, "name") );
+            dbNames.Add( result.data[i]["name"] );
     }
 }
 // internal class TDElement:TreeElement

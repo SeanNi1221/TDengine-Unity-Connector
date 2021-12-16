@@ -15,6 +15,7 @@ public class TDResultDrawer : PropertyDrawer
     GUIStyle headerStyle = new GUIStyle();
     protected static bool showColumnMeta = true;
     protected static bool showData = true;
+    bool[] rowsFold = new bool[1];
     public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
     {
         
@@ -26,8 +27,17 @@ public class TDResultDrawer : PropertyDrawer
         //References
         statusProp = property.FindPropertyRelative("status");
         columnMetaProp = property.FindPropertyRelative("column_meta");
-        dataProp = property.FindPropertyRelative("data");
         rowsProp = property.FindPropertyRelative("rows");
+        
+        //Get the data field
+        var mono = property.serializedObject.targetObject;
+        TDRequest request;
+        if (mono is TDLane) {
+            request = (mono as TDLane).request;
+        }
+        else request = TDBridge.Request;
+        TDResult td = fieldInfo.GetValue(request) as TDResult;
+
         //Draw
         EditorGUI.PrefixLabel(position, GUIUtility.GetControlID(FocusType.Passive), label);
         //status
@@ -65,34 +75,31 @@ public class TDResultDrawer : PropertyDrawer
         EditorGUILayout.Space(10);
         //data
         showData = EditorGUILayout.Foldout(showData, "Data", true, EditorStyles.foldoutHeader);
+
         if (showData) {
             EditorGUI.indentLevel = 0;
-            for (int i=0; i<dataProp.arraySize; i++)
+            var data = td.data;
+            //sync rows foldout length
+            if (rowsFold.Length != data.Count) rowsFold = new bool[data.Count];
+            EditorGUI.indentLevel = 1;
+            for (int i=0; i<data.Count; i++)
             {
-                var rowProp = dataProp.GetArrayElementAtIndex(i);
-                var valuesProp = rowProp.FindPropertyRelative("value");
-                EditorGUI.indentLevel = 1;
-                valuesProp.isExpanded = EditorGUILayout.Foldout(valuesProp.isExpanded, "data " + i, true);
-                if (valuesProp.isExpanded) {
+                var currentRow = data[i];
+                rowsFold[i] = EditorGUILayout.Foldout(rowsFold[i], "row " + i, true);
+                if (rowsFold[i]) {
                     //Title
                     Rect rect = GUILayoutUtility.GetLastRect();
-                    Rect columnRect = new Rect(rect.x, rect.y + 20, 64, 16);
-                    Rect keyRect = new Rect(rect.x + 50, rect.y + 20, 64, 16);
-                    Rect valueRect = new Rect(rect.x + 170, rect.y + 20, 64, 16);
-                    EditorGUI.LabelField(columnRect, "Column", titleStyle);
+                    Rect keyRect = new Rect(rect.x, rect.y + 20, 64, 16);
+                    Rect valueRect = new Rect(rect.x + 120, rect.y + 20, 64, 16);
                     EditorGUI.LabelField(keyRect, "Key", titleStyle);
                     EditorGUI.LabelField(valueRect, "value", titleStyle);
                     GUILayout.Space(20);            
                     //Content
-                    for (int j=0; j<valuesProp.arraySize; j++)
-                    {
-                        string name = columnMetaProp.GetArrayElementAtIndex(j).FindPropertyRelative("name").stringValue;
-                        var valueProp = valuesProp.GetArrayElementAtIndex(j);
-                        EditorGUI.indentLevel = 1;
+
+                    foreach (var pair in data[i]) {
                         EditorGUILayout.BeginHorizontal();
-                        EditorGUILayout.LabelField(j.ToString(), GUILayout.Width(40));
-                        EditorGUILayout.LabelField(name,GUILayout.Width(120));
-                        EditorGUILayout.PropertyField(valueProp,GUIContent.none, GUILayout.ExpandWidth(true));
+                        EditorGUILayout.LabelField(pair.Key, GUILayout.Width(120));
+                        EditorGUILayout.TextField(pair.Value, GUILayout.ExpandWidth(true));
                         EditorGUILayout.EndHorizontal();
                     }
                 }

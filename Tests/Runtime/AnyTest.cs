@@ -18,13 +18,25 @@ public class AnyTest : MonoBehaviour
     public void RunTest1()
     {
         Debug.Log("Running Test1...");
-        Debug.Log("Transform Count: " + obj.hierarchyCount);
+        StartCoroutine(ParentCoroutine());
         Debug.Log("Test1 Finished");
     }
     public void RunTest2()
     {
         Debug.Log("Running Test2...");
         Debug.Log("Test2 Finished");
+    }
+    IEnumerator ParentCoroutine() {
+        Debug.Log("Parent Coroutine started!");
+        yield return ChildCoroutine();
+        Debug.Log("Parent Coroutine continued after child broke!");
+    }
+    IEnumerator ChildCoroutine() {
+        for (int i=0; i<3; i++) {
+            Debug.Log($"Child Coroutine iteration: {i}");
+            yield return null;
+        }
+        yield break;
     }
     void Update() {
 #if UNITY_EDITOR

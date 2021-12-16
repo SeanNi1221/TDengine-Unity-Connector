@@ -34,12 +34,10 @@ public partial class TDBridge
         while (r.data.Count < r.rows)
         {
             string rowString = Process(ref datas, "[", "]");
-            // List<string> value = new List<string>();
-            TDResult.Row currentRow = new TDResult.Row(new List<string>());
+            Dictionary<string, string> currentRow = new Dictionary<string, string>();
             for (int j=0; j < r.column_meta.Count; j++) {
                 Func<string> currentValue = () => {
-                    switch (r.column_meta[j].typeIndex)
-                    {
+                    switch (r.column_meta[j].typeIndex) {
                         case 8: case 9: case 10:
                             return Process(ref rowString, "\"", "\"");
                         default:
@@ -47,7 +45,7 @@ public partial class TDBridge
                             return Process(ref rowString, "", ",");
                     }
                 };
-                currentRow.value.Add(currentValue());
+                currentRow[r.column_meta[j].name] = currentValue();
             }
             r.data.Add(currentRow);
         }

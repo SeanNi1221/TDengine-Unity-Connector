@@ -27,7 +27,7 @@ public partial class TDBridge
         for (int i= 0;i < result.column_meta.Count; i++) {
             TDResult.ColumnMeta col = result.column_meta[i];
             if (col.typeIndex == 9) {
-                if(TDBridge.i.detailedDebugLog) Debug.Log("TIMESTAMP:" + result.data[row].value[i]);
+                if(TDBridge.i.detailedDebugLog) Debug.Log("TIMESTAMP:" + result.data[row][col.name]);
             }
             FieldInfo field = type.GetField(col.name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.IgnoreCase);
             if (field == null) {
@@ -35,7 +35,7 @@ public partial class TDBridge
                 continue;
             }
             if(TDBridge.i.detailedDebugLog) Debug.Log("Got " + SQL.Quote(field.Name));
-            SetValueByString( obj, field, result.data[row].value[i]);
+            SetValueByString( obj, field, result.data[row][col.name]);
         }
         Debug.Log("Deserialization done.");
         return obj;        
@@ -44,7 +44,7 @@ public partial class TDBridge
         Debug.Log("Deserializing object: " + lane.target.name);
         for (int i= 0;i < result.column_meta.Count; i++) {
             TDResult.ColumnMeta col = result.column_meta[i];            
-            if (col.typeIndex == 9) if(TDBridge.DetailedDebugLog) Debug.Log("TIMESTAMP:" + result.data[row].value[i]);
+            if (col.typeIndex == 9) if(TDBridge.DetailedDebugLog) Debug.Log("TIMESTAMP:" + result.data[row][col.name]);
             FieldInfo field = null;
             if (skipSearchFields) goto searchTags;
             if ( lane.fields.TryGetValue(col.name, out field) ) goto set;
@@ -55,7 +55,7 @@ public partial class TDBridge
             continue;
             set:
             if(TDBridge.DetailedDebugLog) Debug.Log("Got " + SQL.Quote(field.Name));
-            SetValueByString( lane.target, field, result.data[row].value[i] );
+            SetValueByString( lane.target, field, result.data[row][col.name] );
             continue;
         }
         Debug.Log("Deserialization done.");
