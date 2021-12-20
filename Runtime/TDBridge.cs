@@ -65,13 +65,13 @@ public partial class TDBridge : MonoBehaviour
     [Tooltip("Default time encoding method of newly created TD Requests")]    
     [SerializeField]
     private TimeEncoding defaultTimeEncoding = TimeEncoding.Normal;
-    public static int DefaultTextLength {
-        get { return i.defaultTextLength; }
-        set { i.defaultTextLength = value; }
-    }
-    [Tooltip("Default length for NCHAR and BINARY if not specified on declaration.")]
-    [SerializeField]
-    private int defaultTextLength = 100;
+    // public static int DefaultTextLength {
+    //     get { return i.defaultTextLength; }
+    //     set { i.defaultTextLength = value; }
+    // }
+    // [Tooltip("Default length for NCHAR and BINARY if not specified on declaration.")]
+    // [SerializeField]
+    // private int defaultTextLength = 100;
     public static string DefaultDatabaseName {
         get { return i.defaultDatabaseName; }
         set { i.defaultDatabaseName = value; }

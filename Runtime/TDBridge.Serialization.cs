@@ -11,10 +11,10 @@ public class TDField : PropertyAttribute
 {    
     public int length; 
     public TDField(int l) {
-        this.length = l <=0  ? TDBridge.DefaultTextLength : l;
+        this.length = l < 1  ? -1 : l;
     }
     public TDField() {
-        this.length = TDBridge.DefaultTextLength;
+        this.length = -1;
     }
 }
 // [AttributeUsage(AttributeTargets.Field)]
@@ -23,10 +23,10 @@ public class TDTag : PropertyAttribute
 {
     public int length; 
     public TDTag(int l) {
-        this.length = l <=0  ? TDBridge.DefaultTextLength : l;
+        this.length = l <=0  ? -1 : l;
     }
     public TDTag() {
-        this.length = TDBridge.DefaultTextLength;
+        this.length = -1;
     }    
 }
 public partial class TDBridge
