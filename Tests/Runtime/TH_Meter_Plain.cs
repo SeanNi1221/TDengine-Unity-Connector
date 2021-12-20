@@ -5,16 +5,16 @@ using Sean21.TDengineConnector;
 
 public class TH_Meter_Plain
 {
-    [DataTag]
+    [TDTag]
     public string id = "1000265";
-    [DataTag(20)]
+    [TDTag(20)]
     public string name = "温湿度传感器";
-    [DataTag(40)]
+    [TDTag(40)]
     public bin location = "Beijing";
-    [DataField]
+    [TDField]
     public float temperature;
-    [DataField]
+    [TDField]
     public float humidity;
-    [DataField(40)]
+    [TDField(40)]
     public string string_data = "This Is A String Field.";
 }

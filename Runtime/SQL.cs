@@ -332,7 +332,7 @@ public static class SQL
         tb_name = SQL.SetTableNameWith(obj);
         if (tag_names.Length < 1 ) {
             foreach (var field in obj.GetType().GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)) {
-                DataTag dt = Attribute.GetCustomAttribute(field, typeof(DataTag)) as DataTag;
+                TDTag dt = Attribute.GetCustomAttribute(field, typeof(TDTag)) as TDTag;
                 if (dt == null) continue;
                 string new_tag_value = TDBridge.serializeValue(obj, field, TDBridge.varType.IndexOf(field.FieldType), dt.length);                                       
                 sqls.Add(action + db_name + Dot + tb_name + operation + field.Name + "=" + new_tag_value);
@@ -365,7 +365,7 @@ public static class SQL
         tb_name = SQL.SetTableNameWith(obj);            
         var field = obj.GetType().GetField(tag_name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.IgnoreCase); 
         if (field == null) { Debug.LogError("Cannot find field " + tag_name + " in object " + obj.name); return string.Empty;}
-        DataTag dt = Attribute.GetCustomAttribute(field, typeof(DataTag)) as DataTag;
+        TDTag dt = Attribute.GetCustomAttribute(field, typeof(TDTag)) as TDTag;
         if (dt == null) {Debug.LogError("Field " + tag_name + " is not a Tag, please add [DataTag] attribute first!"); return string.Empty;}
         new_tag_value = TDBridge.serializeValue(obj, field, TDBridge.varType.IndexOf(field.FieldType), dt.length);
         return action + db_name + Dot + tb_name + operation + tag_name + "=" + new_tag_value;
@@ -386,7 +386,7 @@ public static class SQL
     public static string FieldNames( System.Type type, string timestamp_field_name = "ts", bool withBracket = true) {
         List<string> fieldNames = new List<string>{ Quote(timestamp_field_name) };
         foreach (var field in type.GetFields()) {
-            DataField df = Attribute.GetCustomAttribute(field, typeof(DataField)) as DataField;
+            TDField df = Attribute.GetCustomAttribute(field, typeof(TDField)) as TDField;
             if ( df != null) {
                 fieldNames.Add(field.Name);
             }
@@ -412,8 +412,8 @@ public static class SQL
     public static string ColumnNamesWithoutTS( System.Type type, bool withBracket = false) {
         List<string> columnNames = new List<string>();
         foreach (var field in type.GetFields()) {
-            DataTag dt = Attribute.GetCustomAttribute(field, typeof(DataTag)) as DataTag;
-            DataField df = Attribute.GetCustomAttribute(field, typeof(DataField)) as DataField;
+            TDTag dt = Attribute.GetCustomAttribute(field, typeof(TDTag)) as TDTag;
+            TDField df = Attribute.GetCustomAttribute(field, typeof(TDField)) as TDField;
             if ( dt!= null || df != null ) {
                 columnNames.Add(field.Name);
             }
@@ -435,7 +435,7 @@ public static class SQL
     public static string TagNames( System.Type type, bool withBracket = true) {
         List<string> tagNames = new List<string>();
         foreach (var field in type.GetFields()) {
-            DataTag dt = Attribute.GetCustomAttribute(field, typeof(DataTag)) as DataTag;
+            TDTag dt = Attribute.GetCustomAttribute(field, typeof(TDTag)) as TDTag;
             if ( dt != null) {
                 tagNames.Add(field.Name);
             }
@@ -474,7 +474,7 @@ public static class SQL
     public static string FieldTypes(Type type, string timestamp_field_name = "ts") {
         List<string> fieldTypes = new List<string>{ "'" + timestamp_field_name + "'" + " TIMESTAMP" };
         foreach (var field in type.GetFields()) {            
-            DataField df = Attribute.GetCustomAttribute(field, typeof(DataField)) as DataField;
+            TDField df = Attribute.GetCustomAttribute(field, typeof(TDField)) as TDField;
             if ( df != null) {
                 Type fieldType = field.FieldType;
                 int typeIndex = TDBridge.varType.IndexOf(fieldType);
@@ -529,7 +529,7 @@ public static class SQL
     public static string TagTypes(System.Type type) {
         List<string> tagTypes = new List<string>();
         foreach (var field in type.GetFields()) {
-            DataTag dt = Attribute.GetCustomAttribute(field, typeof(DataTag)) as DataTag;
+            TDTag dt = Attribute.GetCustomAttribute(field, typeof(TDTag)) as TDTag;
             if ( dt != null ) {
                 Type fieldType = field.FieldType;
                 int typeIndex = TDBridge.varType.IndexOf(fieldType);
@@ -571,7 +571,7 @@ public static class SQL
     public static string FieldValues(UnityEngine.Object obj, string timestamp = "NOW") {
         List<string> fieldValues = new List<string>{timestamp};
         foreach (var field in obj.GetType().GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)) {
-            DataField df = Attribute.GetCustomAttribute(field, typeof(DataField)) as DataField;
+            TDField df = Attribute.GetCustomAttribute(field, typeof(TDField)) as TDField;
             if (df != null) {
                 string value = TDBridge.serializeValue(obj, field, TDBridge.varType.IndexOf(field.FieldType), df.length);                  
                 fieldValues.Add(value);
@@ -592,7 +592,7 @@ public static class SQL
     public static string TagValues(UnityEngine.Object obj) {
         List<string> tagValues = new List<string>();
         foreach (var field in obj.GetType().GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)) {
-            DataTag dt = Attribute.GetCustomAttribute(field, typeof(DataTag)) as DataTag;
+            TDTag dt = Attribute.GetCustomAttribute(field, typeof(TDTag)) as TDTag;
             if (dt != null) {
                 string value = TDBridge.serializeValue(obj, field, TDBridge.varType.IndexOf(field.FieldType), dt.length);                                       
                 tagValues.Add(value);

@@ -49,8 +49,8 @@ public class TDLane : MonoBehaviour
         foreach (Component comp in components) {
             var obj = comp as UnityEngine.Object;
             foreach (FieldInfo info in obj.GetType().GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)) {
-                if (info.GetCustomAttribute<DataTag>() != null) goto got;
-                if (info.GetCustomAttribute<DataField>() != null) goto got;
+                if (info.GetCustomAttribute<TDTag>() != null) goto got;
+                if (info.GetCustomAttribute<TDField>() != null) goto got;
                 continue;
                 
                 got:
@@ -76,7 +76,7 @@ public class TDLane : MonoBehaviour
         FieldInfo[] targetFields = target.GetType().GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
         if (targetFields.Length < 1) { Debug.Log(tableName + " - No field found."); return; }
         foreach (FieldInfo info in targetFields) {
-            var dt = info.GetCustomAttribute<DataTag>();
+            var dt = info.GetCustomAttribute<TDTag>();
             if( dt != null) { 
                 tags.Add(info.Name, info);
                 int infoType = TDBridge.varType.IndexOf(info.FieldType);
@@ -84,7 +84,7 @@ public class TDLane : MonoBehaviour
                 if ( SQL.isTextData(infoType) ) lengths.Add(info.Name, dt.length); 
                 continue;
             }
-            var df = info.GetCustomAttribute<DataField>();
+            var df = info.GetCustomAttribute<TDField>();
             if( df != null) { 
                 fields.Add(info.Name, info); 
                 int infoType = TDBridge.varType.IndexOf(info.FieldType);

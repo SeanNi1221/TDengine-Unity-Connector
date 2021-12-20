@@ -5,25 +5,25 @@ using Sean21.TDengineConnector;
 
 public class AlterSTable : MonoBehaviour
 {
-    [DataField]
+    [TDField]
     public bool Power = false;
-    [DataField]
+    [TDField]
     public byte field2 = 9;
-    [DataField]
+    [TDField]
     public short field3_renamed = 24;
-    [DataField]
+    [TDField]
     public int field4 = 9898;
-    [DataField]
+    [TDField]
     public double field5 = 986479868478;
-    [DataField]
+    [TDField]
     public float field6 = 56.647f;
-    [DataTag]
+    [TDTag]
     public double profit = 5645.9949847;
-    [DataTag(21)]
+    [TDTag(21)]
     public bin location = "Tokyo";
-    [DataTag]
+    [TDTag]
     public System.DateTime productionTime = System.DateTime.Now;
-    [DataTag(100)]
+    [TDTag(100)]
     public string indroduction = "This is a device";
     void OnEnable()
     {

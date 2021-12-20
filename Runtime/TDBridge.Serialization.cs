@@ -5,25 +5,27 @@ using System;
 using System.Reflection;
 namespace Sean21.TDengineConnector
 {
-[AttributeUsage(AttributeTargets.Field)]
-public class DataField : Attribute
+// [AttributeUsage(AttributeTargets.Field)]
+// public class TDField : Attribute
+public class TDField : PropertyAttribute
 {    
     public int length; 
-    public DataField(int l) {
+    public TDField(int l) {
         this.length = l <=0  ? TDBridge.DefaultTextLength : l;
     }
-    public DataField() {
+    public TDField() {
         this.length = TDBridge.DefaultTextLength;
     }
 }
-[AttributeUsage(AttributeTargets.Field)]
-public class DataTag : Attribute
+// [AttributeUsage(AttributeTargets.Field)]
+// public class TDTag : Attribute
+public class TDTag : PropertyAttribute
 {
     public int length; 
-    public DataTag(int l) {
+    public TDTag(int l) {
         this.length = l <=0  ? TDBridge.DefaultTextLength : l;
     }
-    public DataTag() {
+    public TDTag() {
         this.length = TDBridge.DefaultTextLength;
     }    
 }
@@ -323,7 +325,7 @@ public partial class TDBridge
     public static List<TDResult.ColumnMeta> FieldMetasOf(System.Type type) {
         List<TDResult.ColumnMeta> list = new List<TDResult.ColumnMeta>();
         foreach (var field in type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)) {            
-            DataField data = Attribute.GetCustomAttribute(field, typeof(DataField)) as DataField;
+            TDField data = Attribute.GetCustomAttribute(field, typeof(TDField)) as TDField;
             if ( data != null) {
                 TDResult.ColumnMeta current = new TDResult.ColumnMeta(field.Name, varType.IndexOf(field.FieldType), data.length);
                 list.Add(current);
@@ -349,7 +351,7 @@ public partial class TDBridge
     public static List<TDResult.ColumnMeta> TagMetasOf( System.Type type) {
         List<TDResult.ColumnMeta> list = new List<TDResult.ColumnMeta>();
         foreach (var field in type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)) {            
-            DataTag data = Attribute.GetCustomAttribute(field, typeof(DataTag)) as DataTag;
+            TDTag data = Attribute.GetCustomAttribute(field, typeof(TDTag)) as TDTag;
             if ( data != null) {
                 TDResult.ColumnMeta current = new TDResult.ColumnMeta(field.Name, varType.IndexOf(field.FieldType), data.length);
                 list.Add(current);

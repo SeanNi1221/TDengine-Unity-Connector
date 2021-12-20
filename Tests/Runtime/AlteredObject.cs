@@ -7,23 +7,23 @@ public class AlteredObject : MonoBehaviour
 {
     // [DataField]
     // public bool field1 = false;
-    [DataField]
+    [TDField]
     public byte field2 = 9;
-    [DataField]
+    [TDField]
     public short field3_renamed = 24;
-    [DataField]
+    [TDField]
     public int field4 = 9898;
-    [DataField]
+    [TDField]
     public double field5 = 986479868478;
-    [DataField]
+    [TDField]
     public float field6 = 56.647f;
-    [DataField]
+    [TDField]
     public double field7;
-    [DataField(21)]
+    [TDField(21)]
     public bin field8 = "binaryContent";
-    [DataField]
+    [TDField]
     public System.DateTime ts9 = System.DateTime.Now;
-    [DataField(10)]
+    [TDField(10)]
     public string field10 = "ncharContent";
     void OnEnable()
     {

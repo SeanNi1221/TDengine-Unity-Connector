@@ -6,19 +6,20 @@ using Sean21.TDengineConnector;
 [ExecuteInEditMode]
 public class TH_Meter : MonoBehaviour
 {
-    [DataTag]
+    public float test;
+    [TDTag]
     public string id = "1000265";
-    [DataTag(20)]
+    [TDTag(20)]
     new public string name = "温湿度传感器";
-    [DataTag(40)]
+    [TDTag(40)]
     public bin location = "Beijing";
-    [DataField]
+    [TDField]
     public float temperature;
-    [DataField]
+    [TDField]
     public float humidity;
-    [DataField(200)]
+    [TDField(200)]
     public string string_data = "This Is A String Field.";
-    [DataField]
+    [TDField]
     public Transform placement;
     void Reset()
     {
