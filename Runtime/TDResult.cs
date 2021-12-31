@@ -20,6 +20,12 @@ public class TDResult {
         public int code;
         public string desc;
     }
+    public List<string> PassValue(string key) {
+        List<string> target = new List<string>(new string[rows]);
+        for (int i=0; i< rows; i++)
+            target[i] = data[i][key];
+        return target;
+    }
     [Serializable]
     public struct ColumnMeta {
         public string name;

@@ -18,7 +18,9 @@ public class AnyTest : MonoBehaviour
     public void RunTest1()
     {
         Debug.Log("Running Test1...");
-        StartCoroutine(ParentCoroutine());
+        var now = System.DateTime.Now;
+        Debug.Log(now.ToString());
+        Debug.Log($"second:{now.Second.ToString()}");
         Debug.Log("Test1 Finished");
     }
     public void RunTest2()
@@ -42,7 +44,6 @@ public class AnyTest : MonoBehaviour
 #if UNITY_EDITOR
         UnityEditor.EditorApplication.update += TDBridge.ConstantLoopUpdate;
 #endif
-
+    
     }
-
 }

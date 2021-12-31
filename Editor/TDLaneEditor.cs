@@ -204,6 +204,7 @@ public class TDLaneEditor : Editor
         //Request
         EditorGUILayout.PropertyField(requestProp,true);
         serializedObject.ApplyModifiedProperties();        
+        if( td.request.operation!=null && !td.request.operation.isDone) Repaint();
     }
 }
 }

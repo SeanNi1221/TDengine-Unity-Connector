@@ -12,6 +12,7 @@ public class TDRequest
     [Header("Settings")]
     [Tooltip("Time encoding method of the returned data. Overriding the global setting in TDBridge.")]
     public TDBridge.TimeEncoding timeEncoding;
+    public bool enableDebugLog = true;
     public bool enableTimer;
     [Header("Terminal")]
     [TextArea(0,100)]
@@ -21,10 +22,9 @@ public class TDRequest
     public string json;
     public float responseTime;
     public TDResult result;
-    [HideInInspector]
-    public TDLane lane;
-    [HideInInspector]
-    public bool succeeded;
+    public TDLane lane{ get; internal set;}
+    public Action OnFinished;
+    public bool succeeded{get; private set;}
     [HideInInspector]
     public UnityWebRequest web;
     public UnityWebRequestAsyncOperation operation;
@@ -46,6 +46,11 @@ public class TDRequest
         this.sql = sql;
         this.timeEncoding = format;
     }
+    public TDRequest(bool enableDebugLog, bool enableTimer = false)
+    {
+        this.enableDebugLog = enableDebugLog;
+        this.enableTimer = enableTimer;
+    }
     public void Clear()
     {
         result.Clear();
@@ -55,11 +60,11 @@ public class TDRequest
         succeeded = false;
         responseTime = 0f;
     }
-    public void Push()
+    public void SendImmediate()
     {
-        Push(sql);
+        SendImmediate(sql);
     }
-    public void Push(string SQL)
+    public void SendImmediate(string SQL)
     {
         if (lane) lane.SendRequest(SQL);
         else TDBridge.SendRequest(SQL);
@@ -73,13 +78,13 @@ public class TDRequest
     {        
         succeeded = false;
         if (string.IsNullOrEmpty(SQL)) {
-            if (TDBridge.DetailedDebugLog) Debug.LogWarning("Cannot send empty string as SQL, aborted!");
+            if (enableDebugLog) if (TDBridge.DetailedDebugLog) Debug.LogWarning("Cannot send empty string as SQL, aborted!");
             yield break;
         }
         sql = SQL;
         string uri = TDBridge.ChooseUri(timeEncoding);
         using ( web = UnityWebRequest.Put(uri, SQL) ){
-            Debug.Log("Connecting: " + web.uri);
+            if (enableDebugLog) Debug.Log("Connecting: " + web.uri);
             web.SetRequestHeader("Authorization", TDBridge.i.header);
             web.timeout = TDBridge.RequestTimeLimit;
             operation = web.SendWebRequest();
@@ -116,9 +121,12 @@ public class TDRequest
                 succeeded = false;
                 yield break;
             }
-            Debug.Log("Request succeeded" + (enableTimer? " in " + responseTime + " s" : "") + ":\n" + SQL);
+            if (enableDebugLog) Debug.Log("Request succeeded" + (enableTimer? " in " + responseTime + " s" : "") + ":\n" + SQL);
             json = web.downloadHandler.text;
             result = TDBridge.Parse(json);
+            
+            if (OnFinished != null) OnFinished();
+
             succeeded = true;
             yield break;
         }

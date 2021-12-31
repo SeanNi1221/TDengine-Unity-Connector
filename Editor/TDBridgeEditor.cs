@@ -11,10 +11,11 @@ public class TDBridgeEditor : Editor
     GUIStyle noteStyle = new GUIStyle();
     SerializedProperty prop;
     TDBridge td;
+    void OnEnable() {
+        td = target as TDBridge;
+    }
     public override void OnInspectorGUI()
-    {
-        td = (TDBridge)target;
-        
+    {        
         //Note style
         noteStyle.fontStyle = FontStyle.Normal;
         noteStyle.alignment = TextAnchor.MiddleCenter;
@@ -25,7 +26,7 @@ public class TDBridgeEditor : Editor
         {
             if (prop.name == "request") {
                 EditorGUILayout.LabelField("*Please initialize to apply changes*", noteStyle);
-                if (GUILayout.Button("Initialize & Login TDBridge", GUILayout.Height(32))) td.Initialize();
+                if (GUILayout.Button("Initialize & Login TDBridge", GUILayout.Height(32))) TDBridge.Initialize();
                 break;
             }
             EditorGUILayout.PropertyField(prop);
@@ -35,6 +36,7 @@ public class TDBridgeEditor : Editor
         
         serializedObject.ApplyModifiedProperties();  
 
+        // if( TDBridge.Request.operation!=null && !td.request.operation.isDone) Repaint();
         RequiresConstantRepaint();      
     }
 }

@@ -85,11 +85,16 @@ public partial class TDBridge : MonoBehaviour
     }
     [SerializeField]
     private bool detailedDebugLog = false;
-    public static TDRequest Request{
-        get{ return i.request; }
+    public static TDResult Result{
+        get => i.request.result;
     }
-    [SerializeField]
+    public static TDRequest Request{
+        get => i.request;
+    }
 
+    public static Action OnInstantiated;
+    public static Action OnInitialized;
+    [SerializeField]
     private TDRequest request = new TDRequest("SHOW DATABASES");
     private string ip;
     private string token;
@@ -110,6 +115,9 @@ public partial class TDBridge : MonoBehaviour
     void OnEnable()
     {
         SetInstance();
+    }
+    public static void Start(IEnumerator coroutine) {
+        i.StartCoroutine(coroutine);
     }
     public static void Login() {
         i.StartCoroutine(Login_co());
@@ -150,9 +158,9 @@ public partial class TDBridge : MonoBehaviour
     public static void ClearRequest() {
         i.request.Clear();
     }
-    public void Initialize()
+    public static void Initialize()
     {
-        SetInstance(); i.FetchURI(); i.StartCoroutine(i.FetchHeader());
+        i.SetInstance(); i.FetchURI(); i.StartCoroutine(i.FetchHeader());
     }
     private void SetInstance()
     {
@@ -162,6 +170,7 @@ public partial class TDBridge : MonoBehaviour
         else if (i != this){
             Debug.LogWarning ("Multiple is of TDBridge is running, this may cause unexpected behaviours!. The newer i is ignored!");
         }
+        if (OnInstantiated != null) TDBridge.OnInstantiated();
     }
     private void FetchURI() {
         if (Application.isEditor) {
