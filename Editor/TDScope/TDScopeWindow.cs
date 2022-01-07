@@ -43,7 +43,8 @@ public class TDScopeWindow : EditorWindow
         loadingIndicator.Draw(position.height-5, position.width);
     }
     void Update() {
-        loadingIndicator.Update(m_view.loadingData);
+        if (m_view != null)
+            loadingIndicator.Update(m_view.loadingData);
         if(m_view.loadingData) Repaint();
     }
     void ValidateMembers() {

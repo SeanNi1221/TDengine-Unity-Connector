@@ -40,7 +40,7 @@ internal static class Styles
             if (!_status) return;
             _pointerX = _pointerX > _width ?
                 0 : _pointerX + rollingSpeed * _width/200;
-            Debug.Log($"pointer:{_pointerX} width:{_width}");
+            // Debug.Log($"pointer:{_pointerX} width:{_width}");
         }
     }
 }
