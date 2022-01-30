@@ -85,6 +85,7 @@ public class TDRequest
         string uri = TDBridge.ChooseUri(timeEncoding);
         using ( web = UnityWebRequest.Put(uri, SQL) ){
             if (enableDebugLog) Debug.Log("Connecting: " + web.uri);
+            Debug.Log(TDBridge.i.header);
             web.SetRequestHeader("Authorization", TDBridge.i.header);
             web.timeout = TDBridge.RequestTimeLimit;
             operation = web.SendWebRequest();

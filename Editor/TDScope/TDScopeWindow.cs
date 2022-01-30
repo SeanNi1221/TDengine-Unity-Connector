@@ -32,6 +32,7 @@ public class TDScopeWindow : EditorWindow
         EditorGUILayout.EndHorizontal();
 
 
+        if (m_view == null) return;
         EditorGUILayout.BeginHorizontal();
         EditorGUILayout.LabelField("db_names:" + m_data.db_names.Count.ToString());
         EditorGUILayout.LabelField("loading:" + m_view.loadingData.ToString());
@@ -43,9 +44,10 @@ public class TDScopeWindow : EditorWindow
         loadingIndicator.Draw(position.height-5, position.width);
     }
     void Update() {
-        if (m_view != null)
+        if (m_view != null) {
             loadingIndicator.Update(m_view.loadingData);
-        if(m_view.loadingData) Repaint();
+            Repaint();
+        }
     }
     void ValidateMembers() {
         if (TDBridge.i == null) {

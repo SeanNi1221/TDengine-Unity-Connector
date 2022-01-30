@@ -158,9 +158,9 @@ public partial class TDBridge : MonoBehaviour
     public static void ClearRequest() {
         i.request.Clear();
     }
-    public static void Initialize()
+    public void Initialize()
     {
-        i.SetInstance(); i.FetchURI(); i.StartCoroutine(i.FetchHeader());
+        SetInstance(); i.FetchURI(); i.StartCoroutine(i.FetchHeader());
     }
     private void SetInstance()
     {
@@ -169,6 +169,7 @@ public partial class TDBridge : MonoBehaviour
         }
         else if (i != this){
             Debug.LogWarning ("Multiple is of TDBridge is running, this may cause unexpected behaviours!. The newer i is ignored!");
+            i = this;
         }
         if (OnInstantiated != null) TDBridge.OnInstantiated();
     }

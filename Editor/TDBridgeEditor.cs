@@ -26,7 +26,7 @@ public class TDBridgeEditor : Editor
         {
             if (prop.name == "request") {
                 EditorGUILayout.LabelField("*Please initialize to apply changes*", noteStyle);
-                if (GUILayout.Button("Initialize & Login TDBridge", GUILayout.Height(32))) TDBridge.Initialize();
+                if (GUILayout.Button("Initialize & Login TDBridge", GUILayout.Height(32))) TDBridge.i.Initialize();
                 break;
             }
             EditorGUILayout.PropertyField(prop);

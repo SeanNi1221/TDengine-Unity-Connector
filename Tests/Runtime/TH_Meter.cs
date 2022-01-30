@@ -7,7 +7,7 @@ using Sean21.TDengineConnector;
 public class TH_Meter : MonoBehaviour
 {
     public float test;
-    [TDTag]
+    [TDTag(100)]
     public string id = "1000265";
     [TDTag(20)]
     new public string name = "温湿度传感器";
